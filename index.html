@@ -1,295 +1,695 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>ECtiers</title>
 <style>
-body { margin:0; font-family:sans-serif; background:#0b0c0f; color:#e6eef8; }
-header { display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:#070708; border-bottom:1px solid rgba(255,255,255,0.03);}
-.brand { font-weight:700; font-size:22px; }
-.navtabs { display:flex; gap:6px; flex-wrap:wrap; margin-right:12px; }
-.tab { padding:6px 12px; background:transparent; border-radius:8px; border:none; cursor:pointer; color:#98a2b3;}
-.tab.active { background:rgba(255,255,255,0.03); color:#6ea0ff;}
-.main { padding:16px; display:grid; grid-template-columns:1fr 280px; gap:12px; }
-.panel { background:#0f1114; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); overflow:auto; max-height:calc(100vh - 60px);}
-.tier-card { background:rgba(255,255,255,0.01); border-radius:12px; padding:12px; margin-bottom:12px; }
-.tier-card h3 { margin:0 0 8px 0; font-size:16px; }
-.player-entry { display:flex; justify-content:space-between; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02); margin-bottom:4px; font-size:14px; flex-direction:column;}
-.player-entry span { font-size:12px; color:#98a2b3;}
-#search-bar { display:flex; gap:6px; align-items:center; }
-#search-bar input { padding:6px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.03); background:transparent; color:inherit;}
-#search-bar button { padding:6px 12px; border-radius:6px; border:none; cursor:pointer; background:#3a7afe; color:white;}
-.modal { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center;}
-.modal-card { background:#0f1114; padding:16px; border-radius:12px; width:340px; border:1px solid rgba(255,255,255,0.03);}
-.hide { display:none;}
+  :root{
+    --bg:#0b0c0f; --panel:#0f1114; --muted:#98a2b3;
+    --gold:#FFD700; --silver:#C0C0C0; --green:#2ecc71; --gray:#808080;
+    --card:#0f1316;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:#e6eef8;font-family:Inter,Arial,Helvetica,sans-serif}
+  header{height:64px;background:#070708;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid rgba(255,255,255,0.03)}
+  .brand{font-weight:800;font-size:20px}
+  .nav{display:flex;gap:8px;align-items:center}
+  .nav button{background:transparent;border:0;color:var(--muted);padding:8px 10px;border-radius:8px;cursor:pointer}
+  .nav button.active{background:rgba(255,255,255,0.02);color:var(--gold)}
+  .top-right{display:flex;gap:8px;align-items:center}
+  .search{display:flex;gap:8px;align-items:center}
+  .search input{padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+  .btn{background:var(--gold);color:#020202;border:0;padding:8px 10px;border-radius:8px;cursor:pointer}
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+  main{padding:18px;display:flex;gap:18px;height:calc(100vh - 64px);overflow:hidden}
+  /* Slides columns */
+  .slides{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;width:100%;height:100%;overflow:auto}
+  .tier-col{background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03);min-width:160px;display:flex;flex-direction:column}
+  .tier-title{font-size:20px;font-weight:800;text-align:center;margin-bottom:8px}
+  .tier-title.small{font-size:14px;color:var(--muted)}
+  .tier-section{flex:1;overflow:auto;padding:6px}
+  .player-card{background:var(--card);padding:8px;border-radius:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;border-left:6px solid transparent;cursor:pointer}
+  .player-left{display:flex;flex-direction:column}
+  .player-name{font-weight:700}
+  .player-pts{font-weight:800;color:var(--muted);font-size:13px}
+  .gm-row{display:grid;grid-template-columns:1fr 80px 40px;gap:8px;align-items:center;padding:6px;border-radius:8px;margin-top:6px}
+  .gm-name{font-weight:600}
+  .tier-badge{padding:4px 8px;border-radius:8px;text-align:center;font-weight:700;color:#041017}
+  .points-bubble{background:rgba(255,255,255,0.03);padding:4px 8px;border-radius:8px;text-align:center}
+  /* player modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center}
+  .modal-card{width:720px;background:var(--panel);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+  .modal-grid{display:grid;grid-template-columns:1fr 300px;gap:12px}
+  .small-muted{color:var(--muted);font-size:13px}
+  /* admin panel (right) */
+  .right-panel{width:320px;display:flex;flex-direction:column;gap:12px}
+  .panel-card{background:var(--panel);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);height:100%;overflow:auto}
+  select,input{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;margin-bottom:8px}
+  .row{display:flex;gap:8px}
+  .hide{display:none}
+  /* responsive */
+  @media (max-width:1100px){
+    main{flex-direction:column}
+    .slides{grid-template-columns:repeat(2,1fr);height:auto}
+    .right-panel{width:100%}
+    .modal-card{width:92%}
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="brand">MC-Tiers Tierlist</div>
-  <div class="navtabs" id="gamemode-tabs"></div>
-  <div id="search-bar">
-    <input id="search-player" placeholder="Search Player">
-    <button id="btn-search">Search</button>
-    <button id="btn-admin-toggle" class="hide">Admin</button>
-    <span id="who">Not logged in</span>
-    <button id="btn-login">Log in</button>
-    <button id="btn-logout" class="hide">Log out</button>
-    <button id="btn-register">Register</button>
+  <div class="brand">MC-Tiers — Slide Deck</div>
+
+  <div class="nav" id="nav-tabs">
+    <!-- JS fills this -->
+  </div>
+
+  <div class="top-right">
+    <div class="search">
+      <input id="search-input" placeholder="Search IGN...">
+      <button class="btn ghost" id="search-btn">Search</button>
+    </div>
+    <button class="btn ghost hide" id="admin-open-btn">Admin</button>
+    <span id="who" class="small-muted">Not logged in</span>
+    <button class="btn" id="login-btn">Log in</button>
+    <button class="btn ghost hide" id="logout-btn">Log out</button>
+    <button class="btn ghost" id="register-btn">Register</button>
   </div>
 </header>
 
-<main class="main">
-  <div class="panel" id="tierlist-panel"></div>
-  <div class="panel" id="player-info-panel">
-    <h3>Player Info</h3>
-    <div id="player-info"></div>
+<main>
+  <div style="flex:1;display:flex;flex-direction:column;gap:12px;">
+    <!-- slide header: show big Tier labels above columns -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">
+      <div style="text-align:center;font-size:28px;font-weight:900">TIER 1</div>
+      <div style="text-align:center;font-size:28px;font-weight:900">TIER 2</div>
+      <div style="text-align:center;font-size:28px;font-weight:900">TIER 3</div>
+      <div style="text-align:center;font-size:28px;font-weight:900">TIER 4</div>
+      <div style="text-align:center;font-size:28px;font-weight:900">TIER 5</div>
+    </div>
+
+    <div class="slides" id="slides">
+      <!-- 5 columns -->
+      <div class="tier-col" id="col-t1"></div>
+      <div class="tier-col" id="col-t2"></div>
+      <div class="tier-col" id="col-t3"></div>
+      <div class="tier-col" id="col-t4"></div>
+      <div class="tier-col" id="col-t5"></div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="panel-card">
+      <h3>Player Info</h3>
+      <div id="player-info">Search or click a player to view profile.</div>
+    </div>
+
+    <div class="panel-card">
+      <h3>Admin / Controls</h3>
+      <div id="admin-controls">
+        <p class="small-muted">Log in as owner/admin to see admin controls.</p>
+      </div>
+    </div>
   </div>
 </main>
 
-<!-- Login/Register Modal -->
-<div class="modal hide" id="modal">
+<!-- Player modal -->
+<div class="modal hide" id="player-modal">
   <div class="modal-card">
-    <h2 id="modal-title">Log In</h2>
-    <input id="modal-user" placeholder="Username" style="width:100%; margin-bottom:6px;">
-    <input id="modal-pass" type="password" placeholder="Password" style="width:100%; margin-bottom:6px;">
-    <div style="margin-top:10px;">
-      <button id="modal-ok">Submit</button>
-      <button id="modal-cancel">Cancel</button>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h2 id="pm-name"></h2>
+        <div id="pm-total" class="small-muted"></div>
+      </div>
+      <div><button id="pm-close" class="btn ghost">Close</button></div>
+    </div>
+
+    <div style="margin-top:12px" id="pm-gm-list">
+      <!-- per-gamemode rows -->
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+      <button id="pm-edit" class="btn ghost hide">Edit (admin)</button>
+      <button id="pm-remove" class="btn ghost hide">Remove tier (admin)</button>
     </div>
   </div>
 </div>
 
-<!-- Admin Modal -->
+<!-- Login/Register Modal -->
+<div class="modal hide" id="auth-modal">
+  <div class="modal-card">
+    <h2 id="auth-title">Log in</h2>
+    <input id="auth-user" placeholder="Username">
+    <input id="auth-pass" type="password" placeholder="Password">
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button id="auth-submit" class="btn">Submit</button>
+      <button id="auth-cancel" class="btn ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin modal -->
 <div class="modal hide" id="admin-modal">
   <div class="modal-card">
     <h2>Admin Controls</h2>
-    <input id="admin-player" placeholder="Player IGN" style="margin-bottom:4px; width:100%;">
-    <select id="admin-gm" style="margin-bottom:4px; width:100%;"></select>
-    <input id="admin-tier" placeholder="Tier (ht1, lt2, etc)" type="text" style="margin-bottom:4px; width:100%;">
-    <input id="admin-points" placeholder="Points" type="number" style="margin-bottom:4px; width:100%;">
-    <select id="admin-role" style="margin-bottom:4px; width:100%;">
-      <option value="">--Change User Role--</option>
-      <option value="user">User</option>
-      <option value="admin">Admin</option>
-      <option value="owner">Owner</option>
-    </select>
-    <div style="display:flex; gap:4px; margin-top:6px;">
-      <button id="btn-admin-set">Set Points</button>
-      <button id="btn-admin-remove">Remove Tier</button>
-      <button id="btn-admin-role">Set Role</button>
-      <button id="btn-admin-close">Close</button>
+    <div style="display:grid;gap:8px">
+      <input id="adm-player" placeholder="Player IGN">
+      <select id="adm-gm"></select>
+      <select id="adm-tier">
+        <option value="">Select tier</option>
+      </select>
+      <div style="display:flex;gap:8px">
+        <button id="adm-add" class="btn">Add Tier</button>
+        <button id="adm-remove" class="btn ghost">Remove Tier</button>
+      </div>
+
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03)">
+
+      <input id="adm-role-user" placeholder="Username to change role">
+      <select id="adm-role-select">
+        <option value="">-- role --</option>
+        <option value="user">user</option>
+        <option value="admin">admin</option>
+        <option value="owner">owner</option>
+      </select>
+      <button id="adm-role-set" class="btn">Set Role</button>
+
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+        <button id="adm-close" class="btn ghost">Close</button>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
+/* -------------------------
+   Data / config
+   ------------------------- */
 const TIER_POINTS = { lt5:10, ht5:20, lt4:30, ht4:40, lt3:50, ht3:60, lt2:70, ht2:80, lt1:90, ht1:100 };
 const GAMEMODES = ["crystal","sword","axe","uhc","netherite_pot","diamond_pot","mace","smp","diamond_smp"];
-const LOCAL_USERS_KEY = "mc_tiers_users";
-const LOCAL_PLAYERS_KEY = "mc_tiers_players";
+const TIER_TO_COL = { ht1:"#FFD700", lt1:"#FFD700", ht2:"#C0C0C0", lt2:"#C0C0C0", ht3:"#2ecc71", lt3:"#2ecc71", ht4:"#2ecc71", lt4:"#2ecc71", ht5:"#808080", lt5:"#808080" };
+const LOCAL_USERS = "mct_users_v1";
+const LOCAL_PLAYERS = "mct_players_v1";
 
-let users = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY)) || {};
-let players = JSON.parse(localStorage.getItem(LOCAL_PLAYERS_KEY)) || {};
-let session = null;
-let currentView = "overall";
+/* Users: { username: { password, role } } 
+   Players: { IGN: { gamemode: [ {tier} , ... ] } }
+*/
+let users = JSON.parse(localStorage.getItem(LOCAL_USERS)) || {};
+let players = JSON.parse(localStorage.getItem(LOCAL_PLAYERS)) || {};
+let session = null; // { username, role }
 
-const gamemodeTabs = document.getElementById("gamemode-tabs");
-const tierlistPanel = document.getElementById("tierlist-panel");
-const playerInfoPanel = document.getElementById("player-info");
-const who = document.getElementById("who");
+/* seed owner */
+if(!users["sussytech"]){
+  users["sussytech"] = { password: "Sussybaka1!2@3#4$", role: "owner" };
+  localStorage.setItem(LOCAL_USERS, JSON.stringify(users));
+}
 
-const modal = document.getElementById("modal");
-const modalTitle = document.getElementById("modal-title");
-const modalUser = document.getElementById("modal-user");
-const modalPass = document.getElementById("modal-pass");
+/* -------------------------
+   Helpers
+   ------------------------- */
+function savePlayers(){ localStorage.setItem(LOCAL_PLAYERS, JSON.stringify(players)); }
+function saveUsers(){ localStorage.setItem(LOCAL_USERS, JSON.stringify(users)); }
+
+function getPointsForTier(tier){
+  return TIER_POINTS[tier] || 0;
+}
+function getOverallPointsForIGN(ign){
+  if(!players[ign]) return 0;
+  let total=0;
+  for(const gm of GAMEMODES){
+    const arr = players[ign][gm]||[];
+    for(const e of arr) total += getPointsForTier(e.tier);
+  }
+  return total;
+}
+/* overall tier mapping EXACT as you specified */
+function getOverallTier(total){
+  if(total>=100) return "ht1";
+  if(total>=90) return "lt1";
+  if(total>=80) return "ht2";
+  if(total>=70) return "lt2";
+  if(total>=60) return "ht3";
+  if(total>=50) return "lt3";
+  if(total>=40) return "ht4";
+  if(total>=30) return "lt4";
+  if(total>=20) return "ht5";
+  if(total>=10) return "lt5";
+  return "none";
+}
+function titleCase(s){ return s.split("_").map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(" "); }
+
+/* ensure HT above LT ordering helper */
+function tierSortKey(t){
+  // return pair: tierNumber, isLT (0 for HT, 1 for LT)
+  if(!t) return [999,0];
+  const m = t.match(/(ht|lt)(\d)/i);
+  if(!m) return [999,0];
+  const n = parseInt(m[2]);
+  const type = m[1].toLowerCase();
+  return [n, (type==="lt"?1:0)];
+}
+
+/* -------------------------
+   DOM refs
+   ------------------------- */
+const navTabs = document.getElementById("nav-tabs");
+const slidesCols = {
+  t1: document.getElementById("col-t1"),
+  t2: document.getElementById("col-t2"),
+  t3: document.getElementById("col-t3"),
+  t4: document.getElementById("col-t4"),
+  t5: document.getElementById("col-t5")
+};
+const playerInfo = document.getElementById("player-info");
+const whoSpan = document.getElementById("who");
+const loginBtn = document.getElementById("login-btn");
+const logoutBtn = document.getElementById("logout-btn");
+const registerBtn = document.getElementById("register-btn");
+const searchInput = document.getElementById("search-input");
+const searchBtn = document.getElementById("search-btn");
+const adminOpenBtn = document.getElementById("admin-open-btn");
+
+const playerModal = document.getElementById("player-modal");
+const pmName = document.getElementById("pm-name");
+const pmTotal = document.getElementById("pm-total");
+const pmGmList = document.getElementById("pm-gm-list");
+const pmClose = document.getElementById("pm-close");
+const pmEdit = document.getElementById("pm-edit");
+const pmRemove = document.getElementById("pm-remove");
+
+const authModal = document.getElementById("auth-modal");
+const authTitle = document.getElementById("auth-title");
+const authUser = document.getElementById("auth-user");
+const authPass = document.getElementById("auth-pass");
+const authSubmit = document.getElementById("auth-submit");
+const authCancel = document.getElementById("auth-cancel");
 
 const adminModal = document.getElementById("admin-modal");
-const adminPlayer = document.getElementById("admin-player");
-const adminGM = document.getElementById("admin-gm");
-const adminTier = document.getElementById("admin-tier");
-const adminPoints = document.getElementById("admin-points");
+const admPlayer = document.getElementById("adm-player");
+const admGm = document.getElementById("adm-gm");
+const admTier = document.getElementById("adm-tier");
+const admAddBtn = document.getElementById("adm-add");
+const admRemoveBtn = document.getElementById("adm-remove");
+const admCloseBtn = document.getElementById("adm-close");
+const admRoleUser = document.getElementById("adm-role-user");
+const admRoleSelect = document.getElementById("adm-role-select");
+const admRoleSet = document.getElementById("adm-role-set");
 
-// Tier colors
-const TIER_COLORS = { 
-  ht1:"#FFD700", lt1:"#FFD700",   // Gold
-  ht2:"#C0C0C0", lt2:"#C0C0C0",   // Silver
-  ht3:"#00FF00", lt3:"#00FF00",   // Green
-  ht4:"#00FF00", lt4:"#00FF00",   // Green
-  ht5:"#808080", lt5:"#808080"    // Gray
-};
-
-function saveUsers(){ localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users)); }
-function savePlayers(){ localStorage.setItem(LOCAL_PLAYERS_KEY, JSON.stringify(players)); }
-
-// --- Setup gamemode tabs ---
-const tabs = [];
-function createTab(name){
-  const btn = document.createElement("button"); btn.textContent = name==="overall"?"Overall":name; btn.className="tab";
-  btn.onclick = ()=>{ currentView=name; tabs.forEach(t=>t.classList.remove("active")); btn.classList.add("active"); renderTierlist(); };
-  gamemodeTabs.appendChild(btn); tabs.push(btn);
-}
-createTab("overall");
-GAMEMODES.forEach(gm=>createTab(gm));
-
-// --- Setup admin dropdown ---
-GAMEMODES.forEach(gm=>{ const opt=document.createElement("option"); opt.value=gm; opt.textContent=gm; adminGM.appendChild(opt); });
-
-// --- Login/Register ---
-document.getElementById("btn-login").onclick = ()=>{ modalTitle.textContent="Log In"; modal.classList.remove("hide"); }
-document.getElementById("btn-register").onclick = ()=>{ modalTitle.textContent="Register"; modal.classList.remove("hide"); }
-document.getElementById("modal-cancel").onclick = ()=>modal.classList.add("hide");
-document.getElementById("modal-ok").onclick = ()=>{
-  const username = modalUser.value.trim();
-  const password = modalPass.value;
-  if(!username || !password) return alert("Enter username/password");
-  if(modalTitle.textContent==="Register"){
-    if(users[username]) return alert("User exists");
-    users[username]={password,role:"user"}; saveUsers(); alert("Registered!"); modal.classList.add("hide");
-  } else {
-    if(!users[username] || users[username].password!==password) return alert("Invalid login");
-    session = {...users[username], username}; who.textContent = username+" • "+session.role;
-    document.getElementById("btn-admin-toggle").classList.toggle("hide", !(session.role==="owner"||session.role==="admin"));
-    modal.classList.add("hide");
-    renderTierlist();
-  }
-  modalUser.value=""; modalPass.value="";
-};
-document.getElementById("btn-logout").onclick = ()=>{ session=null; who.textContent="Not logged in"; document.getElementById("btn-admin-toggle").classList.add("hide"); renderTierlist(); };
-
-// --- Admin Modal ---
-document.getElementById("btn-admin-toggle").onclick = ()=> adminModal.classList.remove("hide");
-document.getElementById("btn-admin-close").onclick = ()=> adminModal.classList.add("hide");
-
-// Admin: Add/Set Points
-document.getElementById("btn-admin-set").onclick = ()=>{
-  if(!session || !(session.role==="owner"||session.role==="admin")) return alert("Only owner/admin");
-  const ign=adminPlayer.value.trim(); const gm=adminGM.value; const tier=adminTier.value.trim(); const pts=parseInt(adminPoints.value);
-  if(!ign || !tier || isNaN(pts)) return alert("Invalid input");
-  if(!players[ign]) players[ign]={};
-  if(!players[ign][gm]) players[ign][gm]=[];
-  players[ign][gm].push({tier,points:pts});
-  savePlayers(); alert("Points added!");
-  adminPlayer.value=""; adminTier.value=""; adminPoints.value=""; renderTierlist();
-};
-
-// Admin: Remove Tier
-document.getElementById("btn-admin-remove").onclick = ()=>{
-  if(!session || !(session.role==="owner"||session.role==="admin")) return alert("Only owner/admin");
-  const ign=adminPlayer.value.trim(); const gm=adminGM.value; const tier=adminTier.value.trim();
-  if(!players[ign] || !players[ign][gm]) return alert("No such player/tier");
-  const index = players[ign][gm].findIndex(e=>e.tier===tier);
-  if(index===-1) return alert("Tier not found for this player in this gamemode");
-  players[ign][gm].splice(index,1);
-  savePlayers();
-  alert(`Removed ${tier} from ${ign} in ${gm}`);
-  adminPlayer.value=""; adminTier.value=""; renderTierlist();
-};
-
-// Admin: Change Role
-document.getElementById("btn-admin-role").onclick = ()=>{
-  if(!session || !(session.role==="owner"||session.role==="admin")) return alert("Only owner/admin");
-  const username = adminPlayer.value.trim();
-  const newRole = document.getElementById("admin-role").value;
-  if(!users[username]) return alert("User does not exist");
-  if(!newRole) return alert("Select role");
-  users[username].role = newRole;
-  saveUsers();
-  alert(`${username} is now ${newRole}`);
-};
-
-// Search
-document.getElementById("btn-search").onclick = ()=>{
-  const ign= document.getElementById("search-player").value.trim();
-  if(!ign){ playerInfoPanel.innerHTML=""; return;}
-  if(!players[ign]) { playerInfoPanel.innerHTML="No data for "+ign; return; }
-  let total=0; let tiers=[];
-  GAMEMODES.forEach(gm=>{ const arr=players[ign][gm]||[]; arr.forEach(e=>{ total+=e.points; tiers.push(`${gm}: ${e.tier}`); }); });
-  const sorted = Object.keys(players).map(p=>{ let t=0; GAMEMODES.forEach(gm=>{ const arr=players[p][gm]||[]; arr.forEach(e=>{t+=e.points}); }); return {p,t}; }).sort((a,b)=>b.t-a.t);
-  let rank=sorted.findIndex(o=>o.p===ign)+1;
-  playerInfoPanel.innerHTML=`<strong>${ign}</strong> — Rank #${rank}<br>Total Points: ${total}<br>Tiers: ${tiers.join(", ")}`;
-};
-
-// Render Tierlist
-function renderTierlist(){
-  tierlistPanel.innerHTML="";
-  
-  if(currentView==="overall"){
-    const overallArr = [];
-    for(const p in players){
-        let total=0;
-        const gmTiers=[];
-        GAMEMODES.forEach(gm=>{
-            const arr = players[p][gm]||[];
-            let gmPts=0;
-            let gmTier="None";
-            if(arr.length>0){
-                gmPts = arr.reduce((a,b)=>a+b.points,0);
-                gmTier = arr[arr.length-1].tier;
-            }
-            total += gmPts;
-            gmTiers.push({gm, tier:gmTier, points: gmPts});
-        });
-        overallArr.push({name:p,total,gmTiers});
+/* -------------------------
+   Build nav tabs
+   ------------------------- */
+let currentView = "overall"; // or gamemode
+function buildNav(){
+  navTabs.innerHTML = "";
+  const names = ["overall", ...GAMEMODES, "admin"];
+  names.forEach(n=>{
+    const b = document.createElement("button");
+    b.textContent = (n==="overall") ? "Overall" : (n==="admin") ? "Admin" : titleCase(n);
+    b.className = (n===currentView) ? "active" : "";
+    b.onclick = ()=>{
+      if(n==="admin"){ openAdmin(); return; }
+      currentView = n;
+      document.querySelectorAll("#nav-tabs button").forEach(el=>el.classList.remove("active"));
+      b.classList.add("active");
+      renderSlides();
     }
-    overallArr.sort((a,b)=>b.total-a.total);
+    navTabs.appendChild(b);
+  });
+}
+buildNav();
 
-    overallArr.forEach(p=>{
-        const card = document.createElement("div"); 
-        card.className="tier-card";
-        const title = document.createElement("div");
-        title.innerHTML=`<strong>${p.name}</strong> — ${p.total} pts`;
-        card.appendChild(title);
+/* populate admin dropdowns */
+function populateAdminLists(){
+  admGm.innerHTML = "";
+  GAMEMODES.forEach(gm=>{
+    const o = document.createElement("option"); o.value = gm; o.textContent = titleCase(gm); admGm.appendChild(o);
+  });
+  admTier.innerHTML = "";
+  const tierList = ["ht1","lt1","ht2","lt2","ht3","lt3","ht4","lt4","ht5","lt5"];
+  for(const t of tierList){
+    const o = document.createElement("option"); o.value = t; o.textContent = t.toUpperCase(); admTier.appendChild(o);
+  }
+}
+populateAdminLists();
 
-        const table = document.createElement("div");
-        table.style.display="grid";
-        table.style.gridTemplateColumns="120px 60px 50px";
-        table.style.rowGap="4px";
-        table.style.marginTop="6px";
+/* -------------------------
+   Rendering logic
+   ------------------------- */
+function clearCols(){
+  for(const k in slidesCols) slidesCols[k].innerHTML = "";
+}
+function makePlayerCardSimple(ign, pts, overallTier){
+  const div = document.createElement("div");
+  div.className = "player-card";
+  div.style.borderLeft = `6px solid ${TIER_COLOR_FROM_OVERALL(overallTier)}`;
+  const left = document.createElement("div"); left.className="player-left";
+  left.innerHTML = `<div class="player-name">${ign}</div><div class="player-pts">${pts} pts</div>`;
+  div.appendChild(left);
+  return div;
+}
+function TIER_COLOR_FROM_OVERALL(tier){ return TIER_TO_COL[tier] || "#333"; }
 
-        p.gmTiers.forEach(gm=>{
-            const gmName = document.createElement("div"); 
-            gmName.textContent = gm.gm.charAt(0).toUpperCase()+gm.gm.slice(1).replace("_"," "); 
-            const tierSpan = document.createElement("div");
-            tierSpan.textContent = gm.tier.toUpperCase();
-            tierSpan.style.background=TIER_COLORS[gm.tier]||"#333";
-            tierSpan.style.padding="2px 6px";
-            tierSpan.style.borderRadius="6px";
-            tierSpan.style.textAlign="center";
-            const pointsDiv = document.createElement("div");
-            pointsDiv.textContent = gm.points;
-            table.appendChild(gmName);
-            table.appendChild(tierSpan);
-            table.appendChild(pointsDiv);
-        });
-
-        card.appendChild(table);
-        tierlistPanel.appendChild(card);
+/* render slides depending on currentView */
+function renderSlides(){
+  buildNav();
+  clearCols();
+  // We'll populate for each overall tier column: players belonging to that tier
+  if(currentView === "overall"){
+    // gather players with overall totals and overall tier
+    const arr = [];
+    for(const ign in players){
+      const total = getOverallPointsForIGN(ign);
+      const overallTier = getOverallTier(total);
+      arr.push({ign, total, overallTier});
+    }
+    // sort by total desc
+    arr.sort((a,b)=>b.total - a.total);
+    // group by tier strings: map tier -> list
+    const byTier = { ht1:[], lt1:[], ht2:[], lt2:[], ht3:[], lt3:[], ht4:[], lt4:[], ht5:[], lt5:[] };
+    for(const p of arr){
+      if(p.overallTier && p.overallTier!=="none") byTier[p.overallTier].push(p);
+    }
+    // For each overall tier group, we need to display players grouped so HT above LT inside each TIER column.
+    // Tier 1 column should contain ht1 then lt1 players, Tier2: ht2 then lt2, etc.
+    // Column mapping:
+    // col1: ht1 & lt1
+    // col2: ht2 & lt2
+    // col3: ht3 & lt3
+    // col4: ht4 & lt4
+    // col5: ht5 & lt5
+    const columns = [
+      ["ht1","lt1"],
+      ["ht2","lt2"],
+      ["ht3","lt3"],
+      ["ht4","lt4"],
+      ["ht5","lt5"]
+    ];
+    columns.forEach((pair, idx)=>{
+      const colEl = slidesCols["t"+(idx+1)];
+      // big header area inside column
+      const header = document.createElement("div");
+      header.className = "tier-title";
+      header.textContent = "TIER " + (idx+1);
+      colEl.appendChild(header);
+      const sub = document.createElement("div"); sub.className="tier-title small"; sub.textContent = pair.map(x=>x.toUpperCase()).join(" / ");
+      colEl.appendChild(sub);
+      const sect = document.createElement("div"); sect.className="tier-section";
+      // list HT first then LT
+      for(const t of pair){
+        // group label
+        if(byTier[t].length>0){
+          // sort players in this sub-tier by total descending
+          byTier[t].sort((a,b)=>b.total - a.total);
+          // place players
+          for(const p of byTier[t]){
+            const card = makePlayerCardSimple(p.ign, p.total, p.overallTier);
+            // attach click -> open player modal
+            card.onclick = ()=> openPlayerModal(p.ign);
+            // small badge for HT/LT
+            const right = document.createElement("div");
+            right.style.display="flex"; right.style.flexDirection="column"; right.style.alignItems="flex-end";
+            const badge = document.createElement("div"); badge.className="tier-badge"; badge.textContent = t.toUpperCase();
+            badge.style.background = TIER_TO_COL[t] || "#333";
+            const ptsBadge = document.createElement("div"); ptsBadge.className="small-muted"; ptsBadge.textContent = p.total + " pts";
+            right.appendChild(badge); right.appendChild(ptsBadge);
+            card.appendChild(right);
+            sect.appendChild(card);
+          }
+        }
+      }
+      colEl.appendChild(sect);
     });
   } else {
+    // currentView is a gamemode: show each tier column but content based on that gamemode's tiers
+    // We'll still use the 5 columns to represent Tier1..Tier5. Each column shows players whose latest tier entry in that gamemode is the corresponding ht/lt.
+    // Build mapping gmTier -> players
     const gm = currentView;
-    const card=document.createElement("div"); card.className="tier-card";
-    const h3=document.createElement("h3"); h3.textContent=gm.replace("_"," "); card.appendChild(h3);
-    for(const p in players){
-        const arr = players[p][gm]||[];
-        arr.forEach(e=>{
-            const pe = document.createElement("div"); pe.className="player-entry";
-            pe.innerHTML = `${p} <span>${e.tier}</span> — ${e.points} pts`;
-            pe.style.borderLeft = `4px solid ${TIER_COLORS[e.tier]||"#333"}`;
-            card.appendChild(pe);
-        });
+    const gmMap = { ht1:[], lt1:[], ht2:[], lt2:[], ht3:[], lt3:[], ht4:[], lt4:[], ht5:[], lt5:[] };
+    for(const ign in players){
+      const arr = players[ign][gm] || [];
+      if(arr.length === 0) continue;
+      // use the last added tier for that gamemode as current
+      const last = arr[arr.length-1];
+      const t = last.tier;
+      const pts = getPointsForTier(t);
+      if(gmMap[t]) gmMap[t].push({ ign, tier: t, pts });
     }
-    tierlistPanel.appendChild(card);
+    // now fill columns similarly (pair groups)
+    const columns = [
+      ["ht1","lt1"],
+      ["ht2","lt2"],
+      ["ht3","lt3"],
+      ["ht4","lt4"],
+      ["ht5","lt5"]
+    ];
+    columns.forEach((pair, idx)=>{
+      const colEl = slidesCols["t"+(idx+1)];
+      const header = document.createElement("div");
+      header.className = "tier-title";
+      header.textContent = "TIER " + (idx+1);
+      colEl.appendChild(header);
+      const sub = document.createElement("div"); sub.className="tier-title small"; sub.textContent = pair.map(x=>x.toUpperCase()).join(" / ");
+      colEl.appendChild(sub);
+      const sect = document.createElement("div"); sect.className="tier-section";
+      for(const t of pair){
+        const list = gmMap[t] || [];
+        list.sort((a,b)=>b.pts - a.pts);
+        for(const p of list){
+          // card with gm tier and points
+          const card = document.createElement("div"); card.className="player-card";
+          card.style.borderLeft = `6px solid ${TIER_TO_COL[t]||"#333"}`;
+          const left = document.createElement("div"); left.className="player-left";
+          left.innerHTML = `<div class="player-name">${p.ign}</div><div class="player-pts">${p.pts} pts</div>`;
+          card.appendChild(left);
+          const right = document.createElement("div"); right.style.display="flex"; right.style.flexDirection="column"; right.style.alignItems="flex-end";
+          const badge = document.createElement("div"); badge.className="tier-badge"; badge.textContent = p.tier.toUpperCase(); badge.style.background = TIER_TO_COL[t] || "#333";
+          right.appendChild(badge);
+          card.appendChild(right);
+          card.onclick = ()=> openPlayerModal(p.ign);
+          sect.appendChild(card);
+        }
+      }
+      colEl.appendChild(sect);
+    });
+  }
+  renderRightPanel();
+}
+
+/* Render right side info & admin controls */
+function renderRightPanel(){
+  // small message or selected player info stays in player-info area
+  // admin controls
+  const adminControls = document.getElementById("admin-controls");
+  if(session && (session.role === "admin" || session.role === "owner")){
+    adminControls.innerHTML = `
+      <div class="small-muted">Logged in as <strong>${session.username}</strong> • ${session.role}</div>
+      <div style="margin-top:8px">Use Admin button or nav 'Admin' to manage tiers & roles.</div>
+    `;
+    document.getElementById("admin-open-btn").classList.remove("hide");
+  } else {
+    adminControls.innerHTML = `<p class="small-muted">Log in as owner/admin to see admin controls.</p>`;
+    document.getElementById("admin-open-btn").classList.add("hide");
   }
 }
 
-// --- Demo owner account ---
-if(!users["sussytech"]){ users["sussytech"]={password:"Sussybaka1!2@3#4$",role:"owner"}; saveUsers(); }
+/* -------------------------
+   Player modal & profile
+   ------------------------- */
+function openPlayerModal(ign){
+  // fill modal with per-gamemode rows stacked, HT above LT within each gamemode listing
+  const total = getOverallPointsForIGN(ign);
+  pmName.textContent = ign;
+  pmTotal.textContent = `Total points: ${total} • Overall tier: ${getOverallTier(total).toUpperCase()}`;
+  pmGmList.innerHTML = "";
+  // For each gamemode, show a row: Gamemode | Tier (latest) | points for that gamemode (sum of tiers)
+  for(const gm of GAMEMODES){
+    const arr = players[ign] && players[ign][gm] ? players[ign][gm] : [];
+    let gmTier = "None", gmPts = 0;
+    if(arr.length>0){
+      // show latest tier for that gamemode, and sum of points in that gamemode
+      gmTier = arr[arr.length-1].tier;
+      for(const e of arr) gmPts += getPointsForTier(e.tier);
+    }
+    const row = document.createElement("div");
+    row.className = "gm-row";
+    const nm = document.createElement("div"); nm.className="gm-name"; nm.textContent = titleCase(gm);
+    const badge = document.createElement("div"); badge.className="tier-badge"; badge.textContent = (gmTier==="None"? "-" : gmTier.toUpperCase());
+    badge.style.background = TIER_TO_COL[gmTier] || "transparent";
+    const pointsDiv = document.createElement("div"); pointsDiv.className="points-bubble"; pointsDiv.textContent = gmPts ? gmPts + " pts" : "-";
+    row.appendChild(nm); row.appendChild(badge); row.appendChild(pointsDiv);
+    pmGmList.appendChild(row);
+  }
 
-renderTierlist();
+  // admin buttons
+  const editable = session && (session.role==="admin" || session.role==="owner");
+  pmEdit.classList.toggle("hide", !editable);
+  pmRemove.classList.toggle("hide", !editable);
+  pmEdit.onclick = ()=> { // open admin modal with this player's IGN
+    openAdmin(ign);
+  };
+  pmRemove.onclick = ()=> {
+    if(!editable) return alert("Only admin/owner");
+    const gm = prompt("Enter gamemode to remove tier from (exact):");
+    if(!gm) return;
+    if(!players[ign] || !players[ign][gm]) return alert("No tier for that player/gamemode");
+    // remove latest tier (last element)
+    const idx = players[ign][gm].length - 1;
+    const removed = players[ign][gm].splice(idx,1);
+    if(players[ign][gm].length === 0) delete players[ign][gm];
+    savePlayers();
+    alert(`Removed ${removed[0].tier} from ${ign} in ${gm}`);
+    renderSlides();
+    openPlayerModal(ign); // refresh modal
+  };
+
+  playerModal.classList.remove("hide");
+}
+pmClose.onclick = ()=> playerModal.classList.add("hide");
+
+/* -------------------------
+   Auth flows
+   ------------------------- */
+loginBtn.onclick = ()=> { authTitle.textContent="Log in"; authUser.value=""; authPass.value=""; authModal.classList.remove("hide"); }
+registerBtn.onclick = ()=> { authTitle.textContent="Register"; authUser.value=""; authPass.value=""; authModal.classList.remove("hide"); }
+authCancel.onclick = ()=> authModal.classList.add("hide");
+authSubmit.onclick = ()=>{
+  const u = authUser.value.trim();
+  const p = authPass.value;
+  if(!u || !p) return alert("enter user & pass");
+  if(authTitle.textContent.includes("Register")){
+    if(users[u]) return alert("user exists");
+    users[u] = { password: p, role: "user" };
+    saveUsers();
+    alert("registered! now login");
+    authModal.classList.add("hide");
+  } else {
+    if(!users[u] || users[u].password !== p) return alert("invalid login");
+    session = { username: u, role: users[u].role };
+    whoSpan.textContent = `${u} • ${users[u].role}`;
+    document.getElementById("logout-btn").classList.remove("hide");
+    document.getElementById("login-btn").classList.add("hide");
+    document.getElementById("register-btn").classList.add("hide");
+    document.getElementById("admin-open-btn").classList.toggle("hide", !(session.role==="admin"||session.role==="owner"));
+    authModal.classList.add("hide");
+    renderSlides();
+  }
+};
+document.getElementById("logout-btn").onclick = ()=>{
+  session = null;
+  whoSpan.textContent = "Not logged in";
+  document.getElementById("logout-btn").classList.add("hide");
+  document.getElementById("login-btn").classList.remove("hide");
+  document.getElementById("register-btn").classList.remove("hide");
+  document.getElementById("admin-open-btn").classList.add("hide");
+  renderSlides();
+};
+
+/* -------------------------
+   Search
+   ------------------------- */
+searchBtn.onclick = ()=>{
+  const q = searchInput.value.trim();
+  if(!q) { playerInfo.innerHTML = "Enter IGN to search."; return; }
+  if(!players[q]) { playerInfo.innerHTML = `<div class="small-muted">No data for ${q}</div>`; return; }
+  const total = getOverallPointsForIGN(q);
+  const overallTier = getOverallTier(total);
+  // build compact list of gamemodes with latest tier
+  let listHtml = `<strong>${q}</strong><div class="small-muted">${total} pts • ${overallTier.toUpperCase()}</div><div style="margin-top:8px">`;
+  for(const gm of GAMEMODES){
+    const arr = players[q][gm]||[];
+    const latest = arr.length ? arr[arr.length-1].tier : "-";
+    const badgeColor = TIER_TO_COL[latest] || "transparent";
+    listHtml += `<div style="display:flex;justify-content:space-between;padding:6px 0"><div>${titleCase(gm)}</div><div style="display:flex;gap:8px"><div style="background:${badgeColor};padding:4px 8px;border-radius:6px;color:#041017;font-weight:700">${latest==='-'?'-':latest.toUpperCase()}</div></div></div>`;
+  }
+  listHtml += `</div>`;
+  playerInfo.innerHTML = listHtml;
+};
+
+/* -------------------------
+   Admin modal functions
+   ------------------------- */
+function openAdmin(prefillIGN){
+  if(!session || !(session.role==="admin"||session.role==="owner")) return alert("Only admin/owner");
+  adminModal.classList.remove("hide");
+  if(prefillIGN) admPlayer.value = prefillIGN;
+}
+admCloseBtn.onclick = ()=> adminModal.classList.add("hide");
+
+admAddBtn.onclick = ()=>{
+  if(!session || !(session.role==="admin"||session.role==="owner")) return alert("Only admin/owner");
+  const ign = admPlayer.value.trim(); const gm = admGm.value; const tier = admTier.value;
+  if(!ign || !gm || !tier) return alert("fill fields");
+  if(!players[ign]) players[ign] = {};
+  if(!players[ign][gm]) players[ign][gm] = [];
+  players[ign][gm].push({ tier });
+  savePlayers();
+  alert(`Added ${tier} for ${ign} in ${gm}`);
+  admPlayer.value=""; admTier.selectedIndex=0;
+  renderSlides();
+};
+
+admRemoveBtn.onclick = ()=>{
+  if(!session || !(session.role==="admin"||session.role==="owner")) return alert("Only admin/owner");
+  const ign = admPlayer.value.trim(); const gm = admGm.value; const tier = admTier.value;
+  if(!ign || !gm || !tier) return alert("fill fields");
+  if(!players[ign] || !players[ign][gm]) return alert("no such entry");
+  // remove last matching instance (from end)
+  for(let i = players[ign][gm].length - 1; i>=0; i--){
+    if(players[ign][gm][i].tier === tier){
+      players[ign][gm].splice(i,1);
+      if(players[ign][gm].length === 0) delete players[ign][gm];
+      savePlayers();
+      alert(`Removed ${tier} from ${ign} in ${gm}`);
+      renderSlides();
+      admPlayer.value=""; admTier.selectedIndex=0;
+      return;
+    }
+  }
+  alert("tier not found for that player in that gamemode");
+};
+
+admRoleSet.onclick = ()=>{
+  if(!session || !(session.role==="admin"||session.role==="owner")) return alert("Only admin/owner");
+  const u = admRoleUser.value.trim();
+  const r = admRoleSelect.value;
+  if(!u || !r) return alert("fill fields");
+  if(!users[u]) return alert("user not found");
+  users[u].role = r;
+  saveUsers();
+  alert(`${u} is now ${r}`);
+  admRoleUser.value=""; admRoleSelect.selectedIndex=0;
+};
+
+/* click admin top button opens modal */
+adminOpenBtn.onclick = ()=> openAdmin();
+
+/* -------------------------
+   Init & Demo data (optional)
+   ------------------------- */
+/* small demo entries so page isn't empty (comment out if you want empty) */
+if(Object.keys(players).length === 0){
+  players["sussytech"] = {
+    crystal: [{tier:"ht3"}],
+    sword: [{tier:"lt3"}],
+    axe: [{tier:"ht3"}],
+    uhc: [{tier:"ht4"}]
+  };
+  players["WhitebutterYT"] = {
+    crystal: [{tier:"lt3"}],
+    sword: [{tier:"lt3"}],
+    diamond_pot: [{tier:"ht4"}]
+  };
+  savePlayers();
+}
+
+/* initial UI state */
+whoSpan.textContent = session ? `${session.username} • ${session.role}` : "Not logged in";
+renderSlides();
+
+/* keyboard: enter in search triggers search */
+searchInput.addEventListener("keydown", (e)=>{ if(e.key === "Enter") searchBtn.click(); });
 </script>
-
 </body>
 </html>
