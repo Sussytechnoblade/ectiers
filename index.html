@@ -1,58 +1,192 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>MC-Style Tierlist</title>
-  <style>
-:root{
-  --bg:#0b0c0f; --panel:#0f1114; --muted:#98a2b3;
-  --accent:#3a7afe; --accent-2:#6ea0ff; --glass: rgba(255,255,255,0.03);
-  --tier-bg: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  --card-radius:12px;
-  --gap:14px;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MC-Tierlist Static Demo</title>
+<style>
+body { margin:0; font-family:sans-serif; background:#0b0c0f; color:#e6eef8; }
+header { display:flex; justify-content:space-between; padding:12px 20px; background:#070708; border-bottom:1px solid rgba(255,255,255,0.03);}
+.brand { font-weight:700; font-size:20px;}
+.navtabs { display:flex; gap:6px;}
+.tab { padding:6px 12px; background:transparent; border-radius:8px; border:none; cursor:pointer; color:#98a2b3;}
+.tab.active { background:rgba(255,255,255,0.03); color:#6ea0ff;}
+.main { display:grid; grid-template-columns:280px 1fr 280px; gap:12px; padding:16px;}
+.panel { background:#0f1114; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03);}
+.controls input, .controls select { width:100%; margin-bottom:8px; padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.03); background:transparent; color:inherit;}
+.controls button { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; background:#3a7afe; color:white; margin-right:6px;}
+.board { background:rgba(255,255,255,0.01); border-radius:12px; padding:12px; min-height:400px; overflow:auto;}
+.player-entry { display:flex; justify-content:space-between; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02); margin-bottom:4px;}
+.leaderboard { display:flex; flex-direction:column; gap:4px;}
+.lb-item { display:flex; justify-content:space-between; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02);}
+.modal { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center;}
+.modal-card { background:#0f1114; padding:16px; border-radius:12px; width:320px; border:1px solid rgba(255,255,255,0.03);}
+.hide { display:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">MC-Tierlist</div>
+  <div class="navtabs" id="gamemode-tabs"></div>
+  <div>
+    <span id="who">Not logged in</span>
+    <button id="btn-login">Log in</button>
+    <button id="btn-logout" class="hide">Log out</button>
+  </div>
+</header>
+
+<main class="main">
+  <div class="panel controls">
+    <h3>Add / Edit (Admin)</h3>
+    <input id="input-player" placeholder="Player Name">
+    <select id="select-gm"></select>
+    <select id="select-tier"></select>
+    <div>
+      <button id="btn-add">Add Tier</button>
+      <button id="btn-clear">Clear Player</button>
+    </div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="panel">
+    <h3>Leaderboard</h3>
+    <div class="leaderboard" id="leaderboard"></div>
+  </div>
+</main>
+
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <h2>Log in</h2>
+    <input id="login-user" placeholder="Username">
+    <input id="login-pass" type="password" placeholder="Password">
+    <div>
+      <button id="login-ok">Log in</button>
+      <button id="login-cancel">Cancel</button>
+    </div>
+    <p style="font-size:13px; color:#98a2b3;">Demo accounts: <strong>admin / adminpass</strong>, <strong>owner / ownerpass</strong></p>
+  </div>
+</div>
+
+<script>
+const TIER_POINTS = { lt5:10, ht5:20, lt4:30, ht4:40, lt3:50, ht3:60, lt2:70, ht2:80, lt1:90, ht1:100 };
+const GAMEMODES = ["crystal","sword","axe","uhc","netherite_pot","diamond_pot","mace","smp","diamond_smp"];
+const ACCOUNTS = { owner:{username:"owner",password:"ownerpass",role:"owner"}, admin:{username:"admin",password:"adminpass",role:"admin"} };
+let players = {};
+let session = null;
+let currentView = "overall";
+
+const board = document.getElementById("board");
+const leaderboard = document.getElementById("leaderboard");
+const who = document.getElementById("who");
+const modal = document.getElementById("modal");
+
+// --- Setup ---
+const gmTabs = document.getElementById("gamemode-tabs");
+const selectGM = document.getElementById("select-gm");
+const selectTier = document.getElementById("select-tier");
+GAMEMODES.forEach(gm=>{
+  const btn = document.createElement("button");
+  btn.textContent = gm.replace("_"," ");
+  btn.className="tab";
+  btn.onclick = ()=>{currentView=gm; renderBoard();}
+  gmTabs.appendChild(btn);
+  const opt = document.createElement("option"); opt.value=gm; opt.textContent=gm.replace("_"," "); selectGM.appendChild(opt);
+});
+for(const t of Object.keys(TIER_POINTS)){
+  const opt = document.createElement("option"); opt.value=t; opt.textContent=t+" — "+TIER_POINTS[t]+" pts";
+  selectTier.appendChild(opt);
 }
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;background:var(--bg);color:#e6eef8;
-  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+
+// --- Event listeners ---
+document.getElementById("btn-login").onclick = ()=> modal.classList.remove("hide");
+document.getElementById("login-cancel").onclick = ()=> modal.classList.add("hide");
+document.getElementById("login-ok").onclick = ()=>{
+  const u=document.getElementById("login-user").value.trim();
+  const p=document.getElementById("login-pass").value;
+  for(const k in ACCOUNTS){ const a=ACCOUNTS[k]; if(a.username===u && a.password===p){ session=a; modal.classList.add("hide"); who.textContent=a.username+" • "+a.role; enableControls(); return; } }
+  alert("Invalid login");
+};
+document.getElementById("btn-logout").onclick = ()=>{
+  session=null; who.textContent="Not logged in"; disableControls();
+};
+
+function enableControls(){ document.getElementById("btn-add").disabled=false; document.getElementById("btn-clear").disabled=false; }
+function disableControls(){ document.getElementById("btn-add").disabled=true; document.getElementById("btn-clear").disabled=true; }
+
+// --- Add / clear ---
+document.getElementById("btn-add").onclick = ()=>{
+  if(!session || session.role!=="admin"){ alert("Only admin"); return;}
+  const name=document.getElementById("input-player").value.trim();
+  const gm=selectGM.value; const tier=selectTier.value;
+  if(!name) return;
+  if(!players[name]) players[name]={};
+  if(!players[name][gm]) players[name][gm]=[];
+  players[name][gm].push(tier);
+  renderBoard(); renderLeaderboard();
+};
+document.getElementById("btn-clear").onclick = ()=>{
+  if(!session || session.role!=="admin"){ alert("Only admin"); return;}
+  const name=document.getElementById("input-player").value.trim();
+  if(players[name]) delete players[name]; renderBoard(); renderLeaderboard();
+};
+
+// --- Render functions ---
+function renderBoard(){
+  board.innerHTML="";
+  if(currentView==="overall"){
+    for(const gm of GAMEMODES){
+      const div=document.createElement("div"); div.style.marginBottom="12px";
+      const h3=document.createElement("h3"); h3.textContent=gm.replace("_"," "); div.appendChild(h3);
+      const arr=[];
+      for(const p in players){
+        const pts=(players[p][gm]||[]).reduce((s,t)=>s+(TIER_POINTS[t]||0),0);
+        if(pts>0) arr.push({name:p,pts});
+      }
+      arr.sort((a,b)=>b.pts-a.pts);
+      arr.forEach((p,i)=>{
+        const pe=document.createElement("div"); pe.className="player-entry"; pe.textContent=(i+1)+". "+p.name+" → "+p.pts;
+        div.appendChild(pe);
+      });
+      if(arr.length===0){ const pe=document.createElement("div"); pe.className="player-entry"; pe.textContent="No entries"; div.appendChild(pe);}
+      board.appendChild(div);
+    }
+  } else {
+    const gm=currentView;
+    const arr=[];
+    for(const p in players){
+      const tiers=players[p][gm]||[];
+      const pts=tiers.reduce((s,t)=>s+(TIER_POINTS[t]||0),0);
+      if(tiers.length>0) arr.push({name:p,tiers,pts});
+    }
+    arr.sort((a,b)=>b.pts-a.pts);
+    arr.forEach((p,i)=>{
+      const pe=document.createElement("div"); pe.className="player-entry"; pe.textContent=(i+1)+". "+p.name+" → "+p.pts+" ("+p.tiers.join(", ")+")";
+      board.appendChild(pe);
+    });
+    if(arr.length===0){ const pe=document.createElement("div"); pe.className="player-entry"; pe.textContent="No entries"; board.appendChild(pe);}
+  }
 }
-.topbar{
-  height:64px; display:flex; align-items:center; justify-content:space-between;
-  padding:0 18px; border-bottom:1px solid rgba(255,255,255,0.03); background:#070708;
+
+function renderLeaderboard(){
+  leaderboard.innerHTML="";
+  const arr=[];
+  for(const p in players){
+    let total=0;
+    for(const gm of GAMEMODES){ total+= (players[p][gm]||[]).reduce((s,t)=>s+(TIER_POINTS[t]||0),0);}
+    arr.push({name:p,total});
+  }
+  arr.sort((a,b)=>b.total-a.total);
+  arr.forEach((p,i)=>{
+    const el=document.createElement("div"); el.className="lb-item"; el.textContent=(i+1)+". "+p.name+" → "+p.total;
+    leaderboard.appendChild(el);
+  });
 }
-.brand{font-weight:700;font-size:20px}
-.navtabs{display:flex;align-items:center;gap:8px}
-.tab{background:transparent;border:0;padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer}
-.tab.active{background:var(--glass);color:var(--accent-2);box-shadow:0 6px 18px rgba(58,122,254,0.06)}
-.tabs-row{display:flex;gap:6px;margin-left:8px}
 
-.account-area{display:flex;gap:8px;align-items:center}
-.who{font-size:13px;color:var(--muted)}
-.btn{background:var(--accent);color:white;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
-.btn.small{padding:6px 8px;font-size:13px}
-.btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+// --- Initial ---
+renderBoard(); renderLeaderboard();
+</script>
 
-.main{display:grid;grid-template-columns:280px 1fr 320px;gap:18px;padding:20px 22px}
-.leftpanel, .rightpanel{background:var(--panel);border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.03)}
-.content{min-height:520px}
-.controls input, .controls select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;margin-bottom:8px}
-.controls h3{margin:0 0 8px 0}
-.row{display:flex;gap:8px}
-.legend h4{margin:8px 0}
-.legend ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
-.legend li{background:var(--tier-bg);padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);font-size:13px;color:var(--muted)}
-
-.board{background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent);padding:16px;border-radius:12px;min-height:480px;border:1px solid rgba(255,255,255,0.02);overflow:auto}
-.gm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.gm-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);transition:transform .15s ease, box-shadow .15s ease}
-.gm-card:hover{transform:translateY(-6px);box-shadow:0 12px 40px rgba(10,10,10,0.6)}
-.gm-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.player-entry{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;margin-bottom:6px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)}
-.player-left{display:flex;gap:10px;align-items:center}
-.pname{font-weight:600}
-.pt{font-weight:700;color:var(--accent-2)}
-
-.leaderboard{display:flex;flex-di
+</body>
+</html>
