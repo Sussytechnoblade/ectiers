@@ -3,24 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MC-Tiers Points System</title>
+<title>ECtiers</title>
 <style>
 body { margin:0; font-family:sans-serif; background:#0b0c0f; color:#e6eef8; }
 header { display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:#070708; border-bottom:1px solid rgba(255,255,255,0.03);}
 .brand { font-weight:700; font-size:22px; }
-.main { padding:16px; display:flex; flex-direction:column; gap:12px; }
+.navtabs { display:flex; gap:6px; flex-wrap:wrap; }
+.tab { padding:6px 12px; background:transparent; border-radius:8px; border:none; cursor:pointer; color:#98a2b3;}
+.tab.active { background:rgba(255,255,255,0.03); color:#6ea0ff;}
+.main { padding:16px; display:grid; grid-template-columns:1fr 280px; gap:12px; }
 .panel { background:#0f1114; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); }
-input, select, button { margin-bottom:8px; padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.03); background:transparent; color:inherit;}
-button { cursor:pointer; background:#3a7afe; color:white; border:none; }
-.player-info { margin-top:8px; padding:8px; border-radius:8px; background:rgba(255,255,255,0.02);}
+.tier-card { background:rgba(255,255,255,0.01); border-radius:12px; padding:12px; margin-bottom:12px; }
+.tier-card h3 { margin:0 0 8px 0; font-size:16px; }
+.player-entry { display:flex; justify-content:space-between; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02); margin-bottom:4px; font-size:14px; flex-direction:column;}
+.player-entry span { font-size:12px; color:#98a2b3;}
+#search-bar { display:flex; gap:6px; align-items:center; }
+#search-bar input { padding:6px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.03); background:transparent; color:inherit;}
+#search-bar button { padding:6px 12px; border-radius:6px; border:none; cursor:pointer; background:#3a7afe; color:white;}
+.modal { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center;}
+.modal-card { background:#0f1114; padding:16px; border-radius:12px; width:320px; border:1px solid rgba(255,255,255,0.03);}
 .hide { display:none;}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="brand">MC-Tiers Points System</div>
-  <div>
+  <div class="brand">MC-Tiers Tierlist</div>
+  <div class="navtabs" id="gamemode-tabs"></div>
+  <div id="search-bar">
+    <input id="search-player" placeholder="Search Player">
+    <button id="btn-search">Search</button>
+    <button id="btn-admin-toggle" class="hide">Admin</button>
     <span id="who">Not logged in</span>
     <button id="btn-login">Log in</button>
     <button id="btn-logout" class="hide">Log out</button>
@@ -29,25 +42,16 @@ button { cursor:pointer; background:#3a7afe; color:white; border:none; }
 </header>
 
 <main class="main">
-  <div class="panel" id="admin-panel" class="hide">
-    <h3>Admin / Owner Controls</h3>
-    <input id="admin-player" placeholder="Player IGN">
-    <select id="admin-gm"></select>
-    <input id="admin-points" placeholder="Points" type="number">
-    <button id="btn-setpoints">Set Points</button>
-  </div>
-
-  <div class="panel">
-    <h3>Search Player</h3>
-    <input id="search-player" placeholder="Enter IGN">
-    <button id="btn-search">Search</button>
-    <div id="player-info" class="player-info hide"></div>
+  <div class="panel" id="tierlist-panel"></div>
+  <div class="panel" id="player-info-panel">
+    <h3>Player Info</h3>
+    <div id="player-info"></div>
   </div>
 </main>
 
 <div class="modal hide" id="modal">
-  <div class="panel">
-    <h3 id="modal-title">Log In</h3>
+  <div class="modal-card">
+    <h2 id="modal-title">Log In</h2>
     <input id="modal-user" placeholder="Username">
     <input id="modal-pass" type="password" placeholder="Password">
     <div>
@@ -57,7 +61,22 @@ button { cursor:pointer; background:#3a7afe; color:white; border:none; }
   </div>
 </div>
 
+<div class="modal hide" id="admin-modal">
+  <div class="modal-card">
+    <h2>Admin Controls</h2>
+    <input id="admin-player" placeholder="Player IGN">
+    <select id="admin-gm"></select>
+    <input id="admin-tier" placeholder="Tier (ht1, lt2, etc)">
+    <input id="admin-points" placeholder="Points" type="number">
+    <div>
+      <button id="btn-admin-set">Set Points</button>
+      <button id="btn-admin-close">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
+const TIER_POINTS = { lt5:10, ht5:20, lt4:30, ht4:40, lt3:50, ht3:60, lt2:70, ht2:80, lt1:90, ht1:100 };
 const GAMEMODES = ["crystal","sword","axe","uhc","netherite_pot","diamond_pot","mace","smp","diamond_smp"];
 const LOCAL_USERS_KEY = "mc_tiers_users";
 const LOCAL_PLAYERS_KEY = "mc_tiers_players";
@@ -65,98 +84,122 @@ const LOCAL_PLAYERS_KEY = "mc_tiers_players";
 let users = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY)) || {};
 let players = JSON.parse(localStorage.getItem(LOCAL_PLAYERS_KEY)) || {};
 let session = null;
+let currentView = "overall";
 
+const gamemodeTabs = document.getElementById("gamemode-tabs");
+const tierlistPanel = document.getElementById("tierlist-panel");
+const playerInfoPanel = document.getElementById("player-info");
 const who = document.getElementById("who");
+
 const modal = document.getElementById("modal");
 const modalTitle = document.getElementById("modal-title");
 const modalUser = document.getElementById("modal-user");
 const modalPass = document.getElementById("modal-pass");
 
-const adminPanel = document.getElementById("admin-panel");
+const adminModal = document.getElementById("admin-modal");
 const adminPlayer = document.getElementById("admin-player");
 const adminGM = document.getElementById("admin-gm");
+const adminTier = document.getElementById("admin-tier");
 const adminPoints = document.getElementById("admin-points");
-const btnSetPoints = document.getElementById("btn-setpoints");
-
-const searchInput = document.getElementById("search-player");
-const btnSearch = document.getElementById("btn-search");
-const playerInfo = document.getElementById("player-info");
 
 function saveUsers(){ localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users)); }
 function savePlayers(){ localStorage.setItem(LOCAL_PLAYERS_KEY, JSON.stringify(players)); }
 
-// --- Setup gamemode dropdown ---
-GAMEMODES.forEach(gm=>{
-  const opt=document.createElement("option"); opt.value=gm; opt.textContent=gm; adminGM.appendChild(opt);
-});
+// --- Setup gamemode tabs ---
+const tabs = [];
+function createTab(name){
+  const btn = document.createElement("button"); btn.textContent = name==="overall"?"Overall":name; btn.className="tab";
+  btn.onclick = ()=>{ currentView=name; tabs.forEach(t=>t.classList.remove("active")); btn.classList.add("active"); renderTierlist(); };
+  gamemodeTabs.appendChild(btn); tabs.push(btn);
+}
+createTab("overall");
+GAMEMODES.forEach(gm=>createTab(gm));
 
-// --- Modal login/register ---
-document.getElementById("btn-login").onclick = ()=>{
-  modalTitle.textContent="Log In";
-  modal.classList.remove("hide");
-};
-document.getElementById("btn-register").onclick = ()=>{
-  modalTitle.textContent="Register";
-  modal.classList.remove("hide");
-};
+// --- Setup admin dropdown ---
+GAMEMODES.forEach(gm=>{ const opt=document.createElement("option"); opt.value=gm; opt.textContent=gm; adminGM.appendChild(opt); });
+
+// --- Login/Register ---
+document.getElementById("btn-login").onclick = ()=>{ modalTitle.textContent="Log In"; modal.classList.remove("hide"); }
+document.getElementById("btn-register").onclick = ()=>{ modalTitle.textContent="Register"; modal.classList.remove("hide"); }
 document.getElementById("modal-cancel").onclick = ()=>modal.classList.add("hide");
-
 document.getElementById("modal-ok").onclick = ()=>{
   const username = modalUser.value.trim();
   const password = modalPass.value;
-  if(!username || !password) { alert("Enter username and password"); return; }
-
+  if(!username || !password) return alert("Enter username/password");
   if(modalTitle.textContent==="Register"){
-    if(users[username]) { alert("User exists"); return; }
-    users[username]={password,role:"user"};
-    saveUsers();
-    alert("Registered successfully. Now login.");
+    if(users[username]) return alert("User exists");
+    users[username]={password,role:"user"}; saveUsers(); alert("Registered!"); modal.classList.add("hide");
   } else {
-    if(!users[username] || users[username].password!==password) { alert("Invalid login"); return; }
-    session = users[username]; session.username=username;
-    who.textContent=username+" • "+session.role;
-    if(session.role==="owner" || session.role==="admin"){ adminPanel.classList.remove("hide"); } else { adminPanel.classList.add("hide"); }
+    if(!users[username] || users[username].password!==password) return alert("Invalid login");
+    session = {...users[username], username}; who.textContent = username+" • "+session.role;
+    document.getElementById("btn-admin-toggle").classList.toggle("hide", !(session.role==="owner"||session.role==="admin"));
     modal.classList.add("hide");
+    renderTierlist();
   }
   modalUser.value=""; modalPass.value="";
 };
+document.getElementById("btn-logout").onclick = ()=>{ session=null; who.textContent="Not logged in"; document.getElementById("btn-admin-toggle").classList.add("hide"); renderTierlist(); };
 
-document.getElementById("btn-logout").onclick = ()=>{
-  session=null;
-  who.textContent="Not logged in";
-  adminPanel.classList.add("hide");
-};
-
-// --- Admin set points ---
-btnSetPoints.onclick = ()=>{
-  if(!session || (session.role!=="owner" && session.role!=="admin")) { alert("Only owner/admin"); return; }
-  const ign = adminPlayer.value.trim();
-  const gm = adminGM.value;
-  const pts = parseInt(adminPoints.value);
-  if(!ign || isNaN(pts)) { alert("Invalid input"); return; }
+// --- Admin Modal ---
+document.getElementById("btn-admin-toggle").onclick = ()=> adminModal.classList.remove("hide");
+document.getElementById("btn-admin-close").onclick = ()=> adminModal.classList.add("hide");
+document.getElementById("btn-admin-set").onclick = ()=>{
+  if(!session || !(session.role==="owner"||session.role==="admin")) return alert("Only owner/admin");
+  const ign=adminPlayer.value.trim(); const gm=adminGM.value; const tier=adminTier.value.trim(); const pts=parseInt(adminPoints.value);
+  if(!ign || !tier || isNaN(pts)) return alert("Invalid input");
   if(!players[ign]) players[ign]={};
-  players[ign][gm]=pts;
-  savePlayers();
-  alert("Points set!");
-  adminPlayer.value=""; adminPoints.value="";
+  if(!players[ign][gm]) players[ign][gm]=[];
+  players[ign][gm].push({tier,points:pts});
+  savePlayers(); alert("Points added!");
+  adminPlayer.value=""; adminTier.value=""; adminPoints.value=""; renderTierlist();
 };
 
-// --- Search player ---
-btnSearch.onclick = ()=>{
-  const ign = searchInput.value.trim();
-  if(!ign){ alert("Enter IGN"); return; }
-  if(!players[ign]) { playerInfo.textContent="No data for player "+ign; playerInfo.classList.remove("hide"); return; }
+// --- Search ---
+document.getElementById("btn-search").onclick = ()=>{
+  const ign= document.getElementById("search-player").value.trim();
+  if(!ign){ playerInfoPanel.innerHTML=""; return;}
+  if(!players[ign]) { playerInfoPanel.innerHTML="No data for "+ign; return; }
   let total=0; let tiers=[];
-  for(const gm of GAMEMODES){ const pts = players[ign][gm]||0; if(pts>0){ total+=pts; tiers.push(gm+"("+pts+")"); } }
-  // Calculate rank
-  const sorted = Object.keys(players).map(p=>{ let t=0; GAMEMODES.forEach(gm=>{ t+=players[p][gm]||0; }); return {p,t}; }).sort((a,b)=>b.t-a.t);
-  let rank = sorted.findIndex(o=>o.p===ign)+1;
-  playerInfo.innerHTML=`<strong>${ign}</strong> — Rank #${rank}<br>Total Points: ${total}<br>Gamemodes: ${tiers.join(", ")}`;
-  playerInfo.classList.remove("hide");
+  GAMEMODES.forEach(gm=>{ const arr=players[ign][gm]||[]; arr.forEach(e=>{ total+=e.points; tiers.push(gm+"("+e.tier+")"); }); });
+  const sorted = Object.keys(players).map(p=>{ let t=0; GAMEMODES.forEach(gm=>{ const arr=players[p][gm]||[]; arr.forEach(e=>{t+=e.points}); }); return {p,t}; }).sort((a,b)=>b.t-a.t);
+  let rank=sorted.findIndex(o=>o.p===ign)+1;
+  playerInfoPanel.innerHTML=`<strong>${ign}</strong> — Rank #${rank}<br>Total Points: ${total}<br>Gamemodes: ${tiers.join(", ")}`;
 };
+
+// --- Render Tierlist ---
+function renderTierlist(){
+  tierlistPanel.innerHTML="";
+  const tiersOrder=["ht1","lt1","ht2","lt2","ht3","lt3","ht4","lt4","ht5","lt5"];
+  let view = currentView==="overall"?GAMEMODES: [currentView];
+  view.forEach(gm=>{
+    const card=document.createElement("div"); card.className="tier-card";
+    const h3=document.createElement("h3"); h3.textContent=gm.replace("_"," "); card.appendChild(h3);
+    tiersOrder.forEach(tier=>{
+      const tierDiv=document.createElement("div"); tierDiv.style.marginBottom="6px";
+      const playersInTier=[];
+      for(const p in players){
+        const arr=players[p][gm]||[];
+        arr.forEach(e=>{ if(e.tier===tier) playersInTier.push({name:p,points:e.points,htlt: tier.startsWith("ht")?"HT":"LT"}); });
+      }
+      playersInTier.sort((a,b)=>b.points-a.points);
+      if(playersInTier.length>0){
+        const tierHeader=document.createElement("div"); tierHeader.textContent=tier.toUpperCase(); tierHeader.style.fontWeight="bold"; tierDiv.appendChild(tierHeader);
+        playersInTier.forEach(pl=>{
+          const pe=document.createElement("div"); pe.className="player-entry"; 
+          pe.innerHTML=`${pl.name} <span>${pl.htlt}</span> — ${pl.points} pts`;
+          tierDiv.appendChild(pe);
+        });
+        card.appendChild(tierDiv);
+      }
+    });
+    tierlistPanel.appendChild(card);
+  });
+}
 
 // --- Demo owner account ---
 if(!users["sussytech"]){ users["sussytech"]={password:"Sussybaka1!2@3#4$",role:"owner"}; saveUsers(); }
+
+renderTierlist();
 </script>
 
 </body>
