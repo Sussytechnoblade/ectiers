@@ -204,7 +204,7 @@ document.getElementById("btn-search").onclick = ()=>{
   if(!ign){ playerInfoPanel.innerHTML=""; return;}
   if(!players[ign]) { playerInfoPanel.innerHTML="No data for "+ign; return; }
   let total=0; let tiers=[];
-  GAMEMODES.forEach(gm=>{ const arr=players[ign][gm]||[]; arr.forEach(e=>{ total+=e.points; tiers.push(e.tier); }); });
+  GAMEMODES.forEach(gm=>{ const arr=players[ign][gm]||[]; arr.forEach(e=>{ total+=e.points; tiers.push(`${gm}: ${e.tier}`); }); });
   const sorted = Object.keys(players).map(p=>{ let t=0; GAMEMODES.forEach(gm=>{ const arr=players[p][gm]||[]; arr.forEach(e=>{t+=e.points}); }); return {p,t}; }).sort((a,b)=>b.t-a.t);
   let rank=sorted.findIndex(o=>o.p===ign)+1;
   playerInfoPanel.innerHTML=`<strong>${ign}</strong> — Rank #${rank}<br>Total Points: ${total}<br>Tiers: ${tiers.join(", ")}`;
@@ -213,65 +213,71 @@ document.getElementById("btn-search").onclick = ()=>{
 // --- Render Tierlist ---
 function renderTierlist(){
   tierlistPanel.innerHTML="";
-  const tiersOrder=["ht1","lt1","ht2","lt2","ht3","lt3","ht4","lt4","ht5","lt5"];
   
   if(currentView==="overall"){
     const overallArr = [];
     for(const p in players){
-      let total=0;
-      GAMEMODES.forEach(gm=>{
-        const arr = players[p][gm]||[];
-        arr.forEach(e=>{ total+= e.points; });
-      });
-      const tier = getOverallTier(total);
-      overallArr.push({name:p,total,tier});
+        let total=0;
+        const gmTiers=[];
+        GAMEMODES.forEach(gm=>{
+            const arr = players[p][gm]||[];
+            let gmPts=0;
+            let gmTier="None";
+            if(arr.length>0){
+                gmPts = arr.reduce((a,b)=>a+b.points,0);
+                gmTier = arr[arr.length-1].tier; // latest tier
+            }
+            total += gmPts;
+            gmTiers.push({gm, tier:gmTier, points: gmPts});
+        });
+        overallArr.push({name:p,total,gmTiers});
     }
     overallArr.sort((a,b)=>b.total-a.total);
 
-    tiersOrder.forEach(tier=>{
-      const tierPlayers = overallArr.filter(p=>p.tier===tier);
-      if(tierPlayers.length>0){
+    overallArr.forEach(p=>{
         const card = document.createElement("div"); 
         card.className="tier-card";
-        card.style.borderLeft=`4px solid ${TIER_COLORS[tier]}`;
-        const tierHeader = document.createElement("div"); 
-        tierHeader.textContent=tier.toUpperCase(); 
-        tierHeader.style.fontWeight="bold"; 
-        tierHeader.style.color=TIER_COLORS[tier];
-        card.appendChild(tierHeader);
-        tierPlayers.forEach(p=>{
-          const pe = document.createElement("div"); 
-          pe.className="player-entry"; 
-          pe.innerHTML = `${p.name} — ${p.total} pts <span>${tier.startsWith("ht")?"HT":"LT"}</span>`;
-          card.appendChild(pe);
-        });
-        tierlistPanel.appendChild(card);
-      }
-    });
+        
+        const title = document.createElement("div");
+        title.innerHTML=`<strong>${p.name}</strong> — ${p.total} pts`;
+        card.appendChild(title);
 
+        const table = document.createElement("div");
+        table.style.display="grid";
+        table.style.gridTemplateColumns="120px 60px";
+        table.style.rowGap="4px";
+        table.style.marginTop="6px";
+
+        p.gmTiers.forEach(gm=>{
+            const gmName = document.createElement("div"); 
+            gmName.textContent = gm.gm.charAt(0).toUpperCase()+gm.gm.slice(1).replace("_"," "); 
+            const tierSpan = document.createElement("div");
+            tierSpan.textContent = gm.tier.toUpperCase();
+            tierSpan.style.background=TIER_COLORS[gm.tier]||"#333";
+            tierSpan.style.padding="2px 6px";
+            tierSpan.style.borderRadius="6px";
+            tierSpan.style.textAlign="center";
+            table.appendChild(gmName);
+            table.appendChild(tierSpan);
+        });
+
+        card.appendChild(table);
+        tierlistPanel.appendChild(card);
+    });
   } else {
+    // Gamemode tab view
     const gm = currentView;
     const card=document.createElement("div"); card.className="tier-card";
     const h3=document.createElement("h3"); h3.textContent=gm.replace("_"," "); card.appendChild(h3);
-    tiersOrder.forEach(tier=>{
-      const tierDiv=document.createElement("div"); tierDiv.style.marginBottom="6px";
-      const playersInTier=[];
-      for(const p in players){
-        const arr=players[p][gm]||[];
-        arr.forEach(e=>{ if(e.tier===tier) playersInTier.push({name:p,points:e.points,htlt: tier.startsWith("ht")?"HT":"LT"}); });
-      }
-      playersInTier.sort((a,b)=>b.points-a.points);
-      if(playersInTier.length>0){
-        const tierHeader=document.createElement("div"); tierHeader.textContent=tier.toUpperCase(); 
-        tierHeader.style.fontWeight="bold"; tierHeader.style.color=TIER_COLORS[tier]; tierDiv.appendChild(tierHeader);
-        playersInTier.forEach(pl=>{
-          const pe=document.createElement("div"); pe.className="player-entry"; 
-          pe.innerHTML=`${pl.name} <span>${pl.htlt}</span> — ${pl.points} pts`;
-          tierDiv.appendChild(pe);
+    for(const p in players){
+        const arr = players[p][gm]||[];
+        arr.forEach(e=>{
+            const pe = document.createElement("div"); pe.className="player-entry";
+            pe.innerHTML = `${p} <span>${e.tier}</span> — ${e.points} pts`;
+            pe.style.borderLeft = `4px solid ${TIER_COLORS[e.tier]||"#333"}`;
+            card.appendChild(pe);
         });
-        card.appendChild(tierDiv);
-      }
-    });
+    }
     tierlistPanel.appendChild(card);
   }
 }
