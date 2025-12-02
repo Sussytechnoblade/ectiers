@@ -6,23 +6,23 @@
 <title>ECtiers</title>
 <style>
 :root{
-  --bg:#0b0c0f; 
-  --panel:#0f1114; 
-  --muted:#98a2b3; 
-  --gold:#FFD700; 
-  --silver:#C0C0C0; 
-  --green:#2ecc71; 
-  --gray:#808080; 
-  --card:#0f1316; 
+  --bg:#0b0c0f;
+  --panel:#0f1114;
+  --muted:#98a2b3;
+  --gold:#FFD700;
+  --silver:#C0C0C0;
+  --green:#2ecc71;
+  --gray:#808080;
+  --card:#0f1316;
 }
-*{box-sizing:border-box} 
+*{box-sizing:border-box}
 body{
   margin:0;
   background:var(--bg);
   color:#e6eef8;
   font-family:Inter,Arial,Helvetica,sans-serif;
-  font-size:13px
-} 
+  font-size:13px;
+}
 header{
   height:56px;
   background:#070708;
@@ -30,10 +30,10 @@ header{
   align-items:center;
   justify-content:space-between;
   padding:0 14px;
-  border-bottom:1px solid rgba(255,255,255,0.03)
-} 
-.brand{font-weight:800;font-size:18px} 
-.nav{display:flex;gap:6px;align-items:center} 
+  border-bottom:1px solid rgba(255,255,255,0.03);
+}
+.brand{font-weight:800;font-size:18px}
+.nav{display:flex;gap:6px;align-items:center}
 .nav button{
   background:transparent;
   border:0;
@@ -41,22 +41,22 @@ header{
   padding:6px 8px;
   border-radius:8px;
   cursor:pointer;
-  font-size:13px
-} 
+  font-size:13px;
+}
 .nav button.active{
   background:rgba(255,255,255,0.02);
-  color:var(--gold)
-} 
-.top-right{display:flex;gap:8px;align-items:center} 
-.search{display:flex;gap:6px;align-items:center} 
+  color:var(--gold);
+}
+.top-right{display:flex;gap:8px;align-items:center}
+.search{display:flex;gap:6px;align-items:center}
 .search input{
   padding:6px 8px;
   border-radius:6px;
   border:1px solid rgba(255,255,255,0.04);
   background:transparent;
   color:inherit;
-  font-size:13px
-} 
+  font-size:13px;
+}
 .btn{
   background:var(--gold);
   color:#020202;
@@ -64,29 +64,29 @@ header{
   padding:6px 8px;
   border-radius:8px;
   cursor:pointer;
-  font-size:13px
-} 
+  font-size:13px;
+}
 .btn.ghost{
   background:transparent;
   border:1px solid rgba(255,255,255,0.04);
-  color:var(--muted)
-} 
+  color:var(--muted);
+}
 main{
   padding:12px;
   display:flex;
   gap:12px;
   height:calc(100vh - 56px);
-  overflow:hidden
-} 
-/* Slides columns */ 
+  overflow:hidden;
+}
+/* Slides columns */
 .slides{
   display:grid;
   grid-template-columns:repeat(5,1fr);
   gap:10px;
   width:100%;
   height:100%;
-  overflow:auto; /* added scrolling */
-} 
+  overflow:auto; /* Added scrolling for the slides container */
+}
 .tier-col{
   background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
   border-radius:10px;
@@ -95,11 +95,15 @@ main{
   min-width:140px;
   display:flex;
   flex-direction:column;
-  overflow:auto; /* added scrolling for each column */
-} 
-.tier-title{font-size:16px;font-weight:800;text-align:center;margin-bottom:6px} 
-.tier-title.small{font-size:11px;color:var(--muted)} 
-.tier-section{flex:1;overflow:auto;padding:6px} 
+  overflow:auto; /* Added scrolling for each column */
+}
+.tier-title{font-size:16px;font-weight:800;text-align:center;margin-bottom:6px}
+.tier-title.small{font-size:11px;color:var(--muted)}
+.tier-section{
+  flex:1;
+  overflow:auto; /* ensure player lists scroll if too tall */
+  padding:6px;
+}
 .player-card{
   background:var(--card);
   padding:8px;
@@ -110,11 +114,11 @@ main{
   align-items:center;
   gap:8px;
   border-left:5px solid transparent;
-  cursor:pointer
-} 
-.player-left{display:flex;flex-direction:column} 
-.player-name{font-weight:700;font-size:14px} 
-.player-pts{font-weight:700;color:var(--muted);font-size:12px} 
+  cursor:pointer;
+}
+.player-left{display:flex;flex-direction:column}
+.player-name{font-weight:700;font-size:14px}
+.player-pts{font-weight:700;color:var(--muted);font-size:12px}
 .gm-row{
   display:grid;
   grid-template-columns:1fr 70px 42px;
@@ -123,25 +127,25 @@ main{
   padding:5px;
   border-radius:6px;
   margin-top:6px;
-  font-size:13px
-} 
-.gm-name{font-weight:600} 
+  font-size:13px;
+}
+.gm-name{font-weight:600}
 .tier-badge{
   padding:4px 8px;
   border-radius:6px;
   text-align:center;
   font-weight:800;
   color:#041017;
-  font-size:12px
-} 
+  font-size:12px;
+}
 .points-bubble{
   background:rgba(255,255,255,0.03);
   padding:4px 8px;
   border-radius:6px;
   text-align:center;
-  font-size:12px
-} 
-/* player modal */ 
+  font-size:12px;
+}
+/* player modal */
 .modal{
   position:fixed;
   inset:0;
@@ -149,36 +153,36 @@ main{
   display:flex;
   align-items:center;
   justify-content:center;
-  z-index:60
-} 
+  z-index:60;
+}
 .modal-card{
   width:720px;
   background:var(--panel);
   padding:14px;
   border-radius:10px;
-  border:1px solid rgba(255,255,255,0.03)
-} 
+  border:1px solid rgba(255,255,255,0.03);
+}
 .modal-grid{
   display:grid;
   grid-template-columns:1fr 260px;
-  gap:10px
-} 
-.small-muted{color:var(--muted);font-size:12px} 
-/* admin panel (right) */ 
+  gap:10px;
+}
+.small-muted{color:var(--muted);font-size:12px}
+/* admin panel (right) */
 .right-panel{
   width:300px;
   display:flex;
   flex-direction:column;
-  gap:10px
-} 
+  gap:10px;
+}
 .panel-card{
   background:var(--panel);
   padding:10px;
   border-radius:10px;
   border:1px solid rgba(255,255,255,0.03);
   height:100%;
-  overflow:auto
-} 
+  overflow:auto; /* added scrolling */
+}
 select,input{
   width:100%;
   padding:7px;
@@ -187,22 +191,85 @@ select,input{
   background:transparent;
   color:inherit;
   margin-bottom:8px;
-  font-size:13px
-} 
-.row{display:flex;gap:8px} 
-.hide{display:none} 
-/* responsive */ 
+  font-size:13px;
+}
+.row{display:flex;gap:8px}
+.hide{display:none}
+/* responsive */
 @media (max-width:1100px){
-  main{flex-direction:column} 
-  .slides{grid-template-columns:repeat(2,1fr);height:auto} 
-  .right-panel{width:100%} 
-  .modal-card{width:92%} 
-} 
+  main{flex-direction:column}
+  .slides{grid-template-columns:repeat(2,1fr);height:auto}
+  .right-panel{width:100%}
+  .modal-card{width:92%}
+}
 </style>
 </head>
 <body>
-<header> ... </header>
-<main> ... </main>
-<!-- modals and scripts remain unchanged -->
+<header>
+  <div class="brand">MC-Tiers — Final Deck</div>
+  <div class="nav" id="nav-tabs"></div>
+  <div class="top-right">
+    <div class="search">
+      <input id="search-input" placeholder="Search IGN..." />
+      <button class="btn ghost" id="search-btn">Search</button>
+    </div>
+    <button class="btn ghost hide" id="admin-open-btn">Admin</button>
+    <span id="who" class="small-muted">Not logged in</span>
+    <button class="btn" id="login-btn">Log in</button>
+    <button class="btn ghost hide" id="logout-btn">Log out</button>
+    <button class="btn ghost" id="register-btn">Register</button>
+  </div>
+</header>
+<main>
+  <div style="flex:1;display:flex;flex-direction:column;gap:10px;">
+    <div id="tier-headers" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
+      <div style="text-align:center;font-size:22px;font-weight:900">TIER 1</div>
+      <div style="text-align:center;font-size:22px;font-weight:900">TIER 2</div>
+      <div style="text-align:center;font-size:22px;font-weight:900">TIER 3</div>
+      <div style="text-align:center;font-size:22px;font-weight:900">TIER 4</div>
+      <div style="text-align:center;font-size:22px;font-weight:900">TIER 5</div>
+    </div>
+    <div class="slides" id="slides">
+      <div class="tier-col" id="col-t1"></div>
+      <div class="tier-col" id="col-t2"></div>
+      <div class="tier-col" id="col-t3"></div>
+      <div class="tier-col" id="col-t4"></div>
+      <div class="tier-col" id="col-t5"></div>
+    </div>
+  </div>
+  <div class="right-panel">
+    <div class="panel-card">
+      <h3 style="margin:6px 0 8px 0">Overall / Player Info</h3>
+      <div id="player-info">Click a player or search to view details.</div>
+    </div>
+    <div class="panel-card">
+      <h3 style="margin:6px 0 8px 0">Admin / Controls</h3>
+      <div id="admin-controls">
+        <p class="small-muted">Log in as owner/admin to access admin tools.</p>
+      </div>
+    </div>
+  </div>
+</main>
+<!-- Player modal -->
+<div class="modal hide" id="player-modal">
+  <div class="modal-card">
+    ...
+  </div>
+</div>
+<!-- Auth modal -->
+<div class="modal hide" id="auth-modal">
+  <div class="modal-card">
+    ...
+  </div>
+</div>
+<!-- Admin modal -->
+<div class="modal hide" id="admin-modal">
+  <div class="modal-card">
+    ...
+  </div>
+</div>
+<script>
+// your existing JS stays exactly the same
+</script>
 </body>
 </html>
