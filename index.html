@@ -3,22 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MC-Tierlist Static Demo</title>
+<title>ECtiers</title>
 <style>
 body { margin:0; font-family:sans-serif; background:#0b0c0f; color:#e6eef8; }
-header { display:flex; justify-content:space-between; padding:12px 20px; background:#070708; border-bottom:1px solid rgba(255,255,255,0.03);}
-.brand { font-weight:700; font-size:20px;}
-.navtabs { display:flex; gap:6px;}
+header { display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:#070708; border-bottom:1px solid rgba(255,255,255,0.03);}
+.brand { font-weight:700; font-size:22px; }
+.navtabs { display:flex; gap:6px; flex-wrap:wrap; }
 .tab { padding:6px 12px; background:transparent; border-radius:8px; border:none; cursor:pointer; color:#98a2b3;}
 .tab.active { background:rgba(255,255,255,0.03); color:#6ea0ff;}
-.main { display:grid; grid-template-columns:280px 1fr 280px; gap:12px; padding:16px;}
-.panel { background:#0f1114; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03);}
+.main { display:grid; grid-template-columns:1fr 280px; gap:12px; padding:16px; }
+.panel { background:#0f1114; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); }
 .controls input, .controls select { width:100%; margin-bottom:8px; padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.03); background:transparent; color:inherit;}
 .controls button { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; background:#3a7afe; color:white; margin-right:6px;}
-.board { background:rgba(255,255,255,0.01); border-radius:12px; padding:12px; min-height:400px; overflow:auto;}
-.player-entry { display:flex; justify-content:space-between; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02); margin-bottom:4px;}
-.leaderboard { display:flex; flex-direction:column; gap:4px;}
-.lb-item { display:flex; justify-content:space-between; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02);}
+.board { display:grid; gap:12px; }
+.card { background:rgba(255,255,255,0.01); padding:12px; border-radius:12px; }
+.card h3 { margin:0 0 8px 0; }
+.player-entry { display:flex; justify-content:space-between; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02); margin-bottom:4px; font-size:14px;}
+.leaderboard h3 { margin-top:0; margin-bottom:8px; font-size:18px; }
+.lb-item { display:flex; justify-content:space-between; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02); margin-bottom:4px; font-size:14px; }
 .modal { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center;}
 .modal-card { background:#0f1114; padding:16px; border-radius:12px; width:320px; border:1px solid rgba(255,255,255,0.03);}
 .hide { display:none;}
@@ -27,7 +29,7 @@ header { display:flex; justify-content:space-between; padding:12px 20px; backgro
 <body>
 
 <header>
-  <div class="brand">MC-Tierlist</div>
+  <div class="brand">MC-Tiers Tierlist</div>
   <div class="navtabs" id="gamemode-tabs"></div>
   <div>
     <span id="who">Not logged in</span>
@@ -37,22 +39,10 @@ header { display:flex; justify-content:space-between; padding:12px 20px; backgro
 </header>
 
 <main class="main">
-  <div class="panel controls">
-    <h3>Add / Edit (Admin)</h3>
-    <input id="input-player" placeholder="Player Name">
-    <select id="select-gm"></select>
-    <select id="select-tier"></select>
-    <div>
-      <button id="btn-add">Add Tier</button>
-      <button id="btn-clear">Clear Player</button>
-    </div>
-  </div>
-
   <div class="board" id="board"></div>
-
-  <div class="panel">
-    <h3>Leaderboard</h3>
-    <div class="leaderboard" id="leaderboard"></div>
+  <div class="panel leaderboard">
+    <h3>Overall Leaderboard</h3>
+    <div id="leaderboard"></div>
   </div>
 </main>
 
@@ -82,90 +72,87 @@ const leaderboard = document.getElementById("leaderboard");
 const who = document.getElementById("who");
 const modal = document.getElementById("modal");
 
-// --- Setup ---
+// --- Setup gamemode tabs ---
 const gmTabs = document.getElementById("gamemode-tabs");
-const selectGM = document.getElementById("select-gm");
-const selectTier = document.getElementById("select-tier");
-GAMEMODES.forEach(gm=>{
-  const btn = document.createElement("button");
-  btn.textContent = gm.replace("_"," ");
-  btn.className="tab";
-  btn.onclick = ()=>{currentView=gm; renderBoard();}
-  gmTabs.appendChild(btn);
-  const opt = document.createElement("option"); opt.value=gm; opt.textContent=gm.replace("_"," "); selectGM.appendChild(opt);
-});
-for(const t of Object.keys(TIER_POINTS)){
-  const opt = document.createElement("option"); opt.value=t; opt.textContent=t+" — "+TIER_POINTS[t]+" pts";
-  selectTier.appendChild(opt);
-}
+const tabs = [];
+const overallBtn = document.createElement("button");
+overallBtn.textContent="Overall";
+overallBtn.className="tab active";
+overallBtn.onclick=()=>{currentView="overall"; setActiveTab(overallBtn); renderBoard();}
+gmTabs.appendChild(overallBtn); tabs.push(overallBtn);
 
-// --- Event listeners ---
+GAMEMODES.forEach(gm=>{
+  const btn=document.createElement("button");
+  btn.textContent=gm.replace("_"," ");
+  btn.className="tab";
+  btn.onclick=()=>{currentView=gm; setActiveTab(btn); renderBoard();}
+  gmTabs.appendChild(btn); tabs.push(btn);
+});
+function setActiveTab(active){ tabs.forEach(t=>t.classList.remove("active")); active.classList.add("active"); }
+
+// --- Login logic ---
 document.getElementById("btn-login").onclick = ()=> modal.classList.remove("hide");
 document.getElementById("login-cancel").onclick = ()=> modal.classList.add("hide");
 document.getElementById("login-ok").onclick = ()=>{
   const u=document.getElementById("login-user").value.trim();
   const p=document.getElementById("login-pass").value;
-  for(const k in ACCOUNTS){ const a=ACCOUNTS[k]; if(a.username===u && a.password===p){ session=a; modal.classList.add("hide"); who.textContent=a.username+" • "+a.role; enableControls(); return; } }
+  for(const k in ACCOUNTS){ const a=ACCOUNTS[k]; if(a.username===u && a.password===p){ session=a; modal.classList.add("hide"); who.textContent=a.username+" • "+a.role; renderBoard(); return; } }
   alert("Invalid login");
 };
-document.getElementById("btn-logout").onclick = ()=>{
-  session=null; who.textContent="Not logged in"; disableControls();
-};
+document.getElementById("btn-logout").onclick = ()=>{ session=null; who.textContent="Not logged in"; renderBoard(); };
 
-function enableControls(){ document.getElementById("btn-add").disabled=false; document.getElementById("btn-clear").disabled=false; }
-function disableControls(){ document.getElementById("btn-add").disabled=true; document.getElementById("btn-clear").disabled=true; }
-
-// --- Add / clear ---
-document.getElementById("btn-add").onclick = ()=>{
-  if(!session || session.role!=="admin"){ alert("Only admin"); return;}
-  const name=document.getElementById("input-player").value.trim();
-  const gm=selectGM.value; const tier=selectTier.value;
-  if(!name) return;
-  if(!players[name]) players[name]={};
-  if(!players[name][gm]) players[name][gm]=[];
-  players[name][gm].push(tier);
+// --- Tierlist functions ---
+function addTier(player, gm, tier){
+  if(!players[player]) players[player]={};
+  if(!players[player][gm]) players[player][gm]=[];
+  players[player][gm].push(tier);
   renderBoard(); renderLeaderboard();
-};
-document.getElementById("btn-clear").onclick = ()=>{
-  if(!session || session.role!=="admin"){ alert("Only admin"); return;}
-  const name=document.getElementById("input-player").value.trim();
-  if(players[name]) delete players[name]; renderBoard(); renderLeaderboard();
-};
+}
 
-// --- Render functions ---
 function renderBoard(){
   board.innerHTML="";
   if(currentView==="overall"){
-    for(const gm of GAMEMODES){
-      const div=document.createElement("div"); div.style.marginBottom="12px";
-      const h3=document.createElement("h3"); h3.textContent=gm.replace("_"," "); div.appendChild(h3);
+    GAMEMODES.forEach(gm=>{
+      const card=document.createElement("div"); card.className="card";
+      const h3=document.createElement("h3"); h3.textContent=gm.replace("_"," "); card.appendChild(h3);
       const arr=[];
       for(const p in players){
-        const pts=(players[p][gm]||[]).reduce((s,t)=>s+(TIER_POINTS[t]||0),0);
-        if(pts>0) arr.push({name:p,pts});
+        const pts=(players[p][gm]||[]).reduce((s,t)=>s+TIER_POINTS[t],0);
+        if(pts>0) arr.push({name:p,pts,tiers:players[p][gm]});
       }
       arr.sort((a,b)=>b.pts-a.pts);
       arr.forEach((p,i)=>{
-        const pe=document.createElement("div"); pe.className="player-entry"; pe.textContent=(i+1)+". "+p.name+" → "+p.pts;
-        div.appendChild(pe);
+        const pe=document.createElement("div"); pe.className="player-entry"; 
+        pe.textContent=(i+1)+". "+p.name+" → "+p.pts+" ("+p.tiers.join(", ")+")";
+        if(session && session.role==="admin"){
+          const btn=document.createElement("button"); btn.textContent="Add Tier"; btn.onclick=()=>{ const t=prompt("Tier (lt5, ht5, ...):"); if(TIER_POINTS[t]){ addTier(p.name, gm, t);} }; pe.appendChild(btn);
+        }
+        card.appendChild(pe);
       });
-      if(arr.length===0){ const pe=document.createElement("div"); pe.className="player-entry"; pe.textContent="No entries"; div.appendChild(pe);}
-      board.appendChild(div);
-    }
+      if(arr.length===0){ const pe=document.createElement("div"); pe.className="player-entry"; pe.textContent="No entries"; card.appendChild(pe);}
+      board.appendChild(card);
+    });
   } else {
     const gm=currentView;
+    const card=document.createElement("div"); card.className="card";
+    const h3=document.createElement("h3"); h3.textContent=gm.replace("_"," "); card.appendChild(h3);
     const arr=[];
     for(const p in players){
       const tiers=players[p][gm]||[];
-      const pts=tiers.reduce((s,t)=>s+(TIER_POINTS[t]||0),0);
+      const pts=tiers.reduce((s,t)=>s+TIER_POINTS[t],0);
       if(tiers.length>0) arr.push({name:p,tiers,pts});
     }
     arr.sort((a,b)=>b.pts-a.pts);
     arr.forEach((p,i)=>{
-      const pe=document.createElement("div"); pe.className="player-entry"; pe.textContent=(i+1)+". "+p.name+" → "+p.pts+" ("+p.tiers.join(", ")+")";
-      board.appendChild(pe);
+      const pe=document.createElement("div"); pe.className="player-entry";
+      pe.textContent=(i+1)+". "+p.name+" → "+p.pts+" ("+p.tiers.join(", ")+")";
+      if(session && session.role==="admin"){
+        const btn=document.createElement("button"); btn.textContent="Add Tier"; btn.onclick=()=>{ const t=prompt("Tier (lt5, ht5, ...):"); if(TIER_POINTS[t]){ addTier(p.name, gm, t);} }; pe.appendChild(btn);
+      }
+      card.appendChild(pe);
     });
-    if(arr.length===0){ const pe=document.createElement("div"); pe.className="player-entry"; pe.textContent="No entries"; board.appendChild(pe);}
+    if(arr.length===0){ const pe=document.createElement("div"); pe.className="player-entry"; pe.textContent="No entries"; card.appendChild(pe);}
+    board.appendChild(card);
   }
 }
 
@@ -174,7 +161,7 @@ function renderLeaderboard(){
   const arr=[];
   for(const p in players){
     let total=0;
-    for(const gm of GAMEMODES){ total+= (players[p][gm]||[]).reduce((s,t)=>s+(TIER_POINTS[t]||0),0);}
+    GAMEMODES.forEach(gm=>{ total+= (players[p][gm]||[]).reduce((s,t)=>s+TIER_POINTS[t],0); });
     arr.push({name:p,total});
   }
   arr.sort((a,b)=>b.total-a.total);
@@ -184,7 +171,11 @@ function renderLeaderboard(){
   });
 }
 
-// --- Initial ---
+// --- Demo data ---
+addTier("SussyTech","crystal","ht1");
+addTier("SussyTech","uhc","lt3");
+addTier("GamerX","diamond_pot","ht2");
+
 renderBoard(); renderLeaderboard();
 </script>
 
