@@ -8,11 +8,11 @@
 body { margin:0; font-family:sans-serif; background:#0b0c0f; color:#e6eef8; }
 header { display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:#070708; border-bottom:1px solid rgba(255,255,255,0.03);}
 .brand { font-weight:700; font-size:22px; }
-.navtabs { display:flex; gap:6px; flex-wrap:wrap; }
+.navtabs { display:flex; gap:6px; flex-wrap:wrap; margin-right:12px; }
 .tab { padding:6px 12px; background:transparent; border-radius:8px; border:none; cursor:pointer; color:#98a2b3;}
 .tab.active { background:rgba(255,255,255,0.03); color:#6ea0ff;}
 .main { padding:16px; display:grid; grid-template-columns:1fr 280px; gap:12px; }
-.panel { background:#0f1114; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); }
+.panel { background:#0f1114; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); overflow:auto; max-height:calc(100vh - 60px);}
 .tier-card { background:rgba(255,255,255,0.01); border-radius:12px; padding:12px; margin-bottom:12px; }
 .tier-card h3 { margin:0 0 8px 0; font-size:16px; }
 .player-entry { display:flex; justify-content:space-between; padding:6px 8px; border-radius:6px; background:rgba(255,255,255,0.02); margin-bottom:4px; font-size:14px; flex-direction:column;}
@@ -49,27 +49,36 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
   </div>
 </main>
 
+<!-- Login/Register Modal -->
 <div class="modal hide" id="modal">
   <div class="modal-card">
     <h2 id="modal-title">Log In</h2>
     <input id="modal-user" placeholder="Username">
     <input id="modal-pass" type="password" placeholder="Password">
-    <div>
+    <div style="margin-top:10px;">
       <button id="modal-ok">Submit</button>
       <button id="modal-cancel">Cancel</button>
     </div>
   </div>
 </div>
 
+<!-- Admin Modal -->
 <div class="modal hide" id="admin-modal">
   <div class="modal-card">
     <h2>Admin Controls</h2>
-    <input id="admin-player" placeholder="Player IGN">
-    <select id="admin-gm"></select>
-    <input id="admin-tier" placeholder="Tier (ht1, lt2, etc)">
-    <input id="admin-points" placeholder="Points" type="number">
+    <input id="admin-player" placeholder="Player IGN" style="margin-bottom:4px; width:100%;">
+    <select id="admin-gm" style="margin-bottom:4px; width:100%;"></select>
+    <input id="admin-tier" placeholder="Tier (ht1, lt2, etc)" type="text" style="margin-bottom:4px; width:100%;">
+    <input id="admin-points" placeholder="Points" type="number" style="margin-bottom:4px; width:100%;">
+    <select id="admin-role" style="margin-bottom:4px; width:100%;">
+      <option value="">--Change User Role--</option>
+      <option value="user">User</option>
+      <option value="admin">Admin</option>
+      <option value="owner">Owner</option>
+    </select>
     <div>
       <button id="btn-admin-set">Set Points</button>
+      <button id="btn-admin-role">Set Role</button>
       <button id="btn-admin-close">Close</button>
     </div>
   </div>
@@ -102,8 +111,31 @@ const adminGM = document.getElementById("admin-gm");
 const adminTier = document.getElementById("admin-tier");
 const adminPoints = document.getElementById("admin-points");
 
+// Tier colors
+const TIER_COLORS = { 
+  ht1:"#FFD700", lt1:"#FFD700",   // Gold
+  ht2:"#C0C0C0", lt2:"#C0C0C0",   // Silver
+  ht3:"#00FF00", lt3:"#00FF00",   // Green
+  ht4:"#00FF00", lt4:"#00FF00",   // Green
+  ht5:"#808080", lt5:"#808080"    // Gray
+};
+
 function saveUsers(){ localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users)); }
 function savePlayers(){ localStorage.setItem(LOCAL_PLAYERS_KEY, JSON.stringify(players)); }
+
+function getOverallTier(total){
+  if(total>=100) return "ht1";
+  if(total>=90)  return "lt1";
+  if(total>=80)  return "ht2";
+  if(total>=70)  return "lt2";
+  if(total>=60)  return "ht3";
+  if(total>=50)  return "lt3";
+  if(total>=40)  return "ht4";
+  if(total>=30)  return "lt4";
+  if(total>=20)  return "ht5";
+  if(total>=10)  return "lt5";
+  return "none";
+}
 
 // --- Setup gamemode tabs ---
 const tabs = [];
@@ -154,24 +186,71 @@ document.getElementById("btn-admin-set").onclick = ()=>{
   adminPlayer.value=""; adminTier.value=""; adminPoints.value=""; renderTierlist();
 };
 
+// --- Admin role change ---
+document.getElementById("btn-admin-role").onclick = ()=>{
+  if(!session || !(session.role==="owner"||session.role==="admin")) return alert("Only owner/admin");
+  const username = adminPlayer.value.trim();
+  const newRole = document.getElementById("admin-role").value;
+  if(!users[username]) return alert("User does not exist");
+  if(!newRole) return alert("Select role");
+  users[username].role = newRole;
+  saveUsers();
+  alert(`${username} is now ${newRole}`);
+};
+
 // --- Search ---
 document.getElementById("btn-search").onclick = ()=>{
   const ign= document.getElementById("search-player").value.trim();
   if(!ign){ playerInfoPanel.innerHTML=""; return;}
   if(!players[ign]) { playerInfoPanel.innerHTML="No data for "+ign; return; }
   let total=0; let tiers=[];
-  GAMEMODES.forEach(gm=>{ const arr=players[ign][gm]||[]; arr.forEach(e=>{ total+=e.points; tiers.push(gm+"("+e.tier+")"); }); });
+  GAMEMODES.forEach(gm=>{ const arr=players[ign][gm]||[]; arr.forEach(e=>{ total+=e.points; tiers.push(e.tier); }); });
   const sorted = Object.keys(players).map(p=>{ let t=0; GAMEMODES.forEach(gm=>{ const arr=players[p][gm]||[]; arr.forEach(e=>{t+=e.points}); }); return {p,t}; }).sort((a,b)=>b.t-a.t);
   let rank=sorted.findIndex(o=>o.p===ign)+1;
-  playerInfoPanel.innerHTML=`<strong>${ign}</strong> — Rank #${rank}<br>Total Points: ${total}<br>Gamemodes: ${tiers.join(", ")}`;
+  playerInfoPanel.innerHTML=`<strong>${ign}</strong> — Rank #${rank}<br>Total Points: ${total}<br>Tiers: ${tiers.join(", ")}`;
 };
 
 // --- Render Tierlist ---
 function renderTierlist(){
   tierlistPanel.innerHTML="";
   const tiersOrder=["ht1","lt1","ht2","lt2","ht3","lt3","ht4","lt4","ht5","lt5"];
-  let view = currentView==="overall"?GAMEMODES: [currentView];
-  view.forEach(gm=>{
+  
+  if(currentView==="overall"){
+    const overallArr = [];
+    for(const p in players){
+      let total=0;
+      GAMEMODES.forEach(gm=>{
+        const arr = players[p][gm]||[];
+        arr.forEach(e=>{ total+= e.points; });
+      });
+      const tier = getOverallTier(total);
+      overallArr.push({name:p,total,tier});
+    }
+    overallArr.sort((a,b)=>b.total-a.total);
+
+    tiersOrder.forEach(tier=>{
+      const tierPlayers = overallArr.filter(p=>p.tier===tier);
+      if(tierPlayers.length>0){
+        const card = document.createElement("div"); 
+        card.className="tier-card";
+        card.style.borderLeft=`4px solid ${TIER_COLORS[tier]}`;
+        const tierHeader = document.createElement("div"); 
+        tierHeader.textContent=tier.toUpperCase(); 
+        tierHeader.style.fontWeight="bold"; 
+        tierHeader.style.color=TIER_COLORS[tier];
+        card.appendChild(tierHeader);
+        tierPlayers.forEach(p=>{
+          const pe = document.createElement("div"); 
+          pe.className="player-entry"; 
+          pe.innerHTML = `${p.name} — ${p.total} pts <span>${tier.startsWith("ht")?"HT":"LT"}</span>`;
+          card.appendChild(pe);
+        });
+        tierlistPanel.appendChild(card);
+      }
+    });
+
+  } else {
+    const gm = currentView;
     const card=document.createElement("div"); card.className="tier-card";
     const h3=document.createElement("h3"); h3.textContent=gm.replace("_"," "); card.appendChild(h3);
     tiersOrder.forEach(tier=>{
@@ -183,7 +262,8 @@ function renderTierlist(){
       }
       playersInTier.sort((a,b)=>b.points-a.points);
       if(playersInTier.length>0){
-        const tierHeader=document.createElement("div"); tierHeader.textContent=tier.toUpperCase(); tierHeader.style.fontWeight="bold"; tierDiv.appendChild(tierHeader);
+        const tierHeader=document.createElement("div"); tierHeader.textContent=tier.toUpperCase(); 
+        tierHeader.style.fontWeight="bold"; tierHeader.style.color=TIER_COLORS[tier]; tierDiv.appendChild(tierHeader);
         playersInTier.forEach(pl=>{
           const pe=document.createElement("div"); pe.className="player-entry"; 
           pe.innerHTML=`${pl.name} <span>${pl.htlt}</span> — ${pl.points} pts`;
@@ -193,7 +273,7 @@ function renderTierlist(){
       }
     });
     tierlistPanel.appendChild(card);
-  });
+  }
 }
 
 // --- Demo owner account ---
