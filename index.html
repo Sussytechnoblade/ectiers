@@ -41,11 +41,11 @@ header{
   padding:6px 8px;
   border-radius:8px;
   cursor:pointer;
-  font-size:13px;
+  font-size:13px
 }
 .nav button.active{
   background:rgba(255,255,255,0.02);
-  color:var(--gold);
+  color:var(--gold)
 }
 .top-right{display:flex;gap:8px;align-items:center}
 .search{display:flex;gap:6px;align-items:center}
@@ -55,7 +55,7 @@ header{
   border:1px solid rgba(255,255,255,0.04);
   background:transparent;
   color:inherit;
-  font-size:13px;
+  font-size:13px
 }
 .btn{
   background:var(--gold);
@@ -64,19 +64,19 @@ header{
   padding:6px 8px;
   border-radius:8px;
   cursor:pointer;
-  font-size:13px;
+  font-size:13px
 }
 .btn.ghost{
   background:transparent;
   border:1px solid rgba(255,255,255,0.04);
-  color:var(--muted);
+  color:var(--muted)
 }
 main{
   padding:12px;
   display:flex;
   gap:12px;
   height:calc(100vh - 56px);
-  overflow:hidden;
+  overflow:hidden
 }
 /* Slides columns */
 .slides{
@@ -85,7 +85,7 @@ main{
   gap:10px;
   width:100%;
   height:100%;
-  overflow:auto; /* Added scrolling for the slides container */
+  overflow:auto
 }
 .tier-col{
   background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
@@ -95,15 +95,16 @@ main{
   min-width:140px;
   display:flex;
   flex-direction:column;
-  overflow:auto; /* Added scrolling for each column */
+  overflow-y:auto; /* ADDED vertical scroll */
 }
-.tier-title{font-size:16px;font-weight:800;text-align:center;margin-bottom:6px}
+.tier-title{
+  font-size:16px;
+  font-weight:800;
+  text-align:center;
+  margin-bottom:6px
+}
 .tier-title.small{font-size:11px;color:var(--muted)}
-.tier-section{
-  flex:1;
-  overflow:auto; /* ensure player lists scroll if too tall */
-  padding:6px;
-}
+.tier-section{flex:1;overflow:auto;padding:6px}
 .player-card{
   background:var(--card);
   padding:8px;
@@ -114,85 +115,24 @@ main{
   align-items:center;
   gap:8px;
   border-left:5px solid transparent;
-  cursor:pointer;
+  cursor:pointer
 }
 .player-left{display:flex;flex-direction:column}
 .player-name{font-weight:700;font-size:14px}
 .player-pts{font-weight:700;color:var(--muted);font-size:12px}
-.gm-row{
-  display:grid;
-  grid-template-columns:1fr 70px 42px;
-  gap:8px;
-  align-items:center;
-  padding:5px;
-  border-radius:6px;
-  margin-top:6px;
-  font-size:13px;
-}
+.gm-row{display:grid;grid-template-columns:1fr 70px 42px;gap:8px;align-items:center;padding:5px;border-radius:6px;margin-top:6px;font-size:13px}
 .gm-name{font-weight:600}
-.tier-badge{
-  padding:4px 8px;
-  border-radius:6px;
-  text-align:center;
-  font-weight:800;
-  color:#041017;
-  font-size:12px;
-}
-.points-bubble{
-  background:rgba(255,255,255,0.03);
-  padding:4px 8px;
-  border-radius:6px;
-  text-align:center;
-  font-size:12px;
-}
+.tier-badge{padding:4px 8px;border-radius:6px;text-align:center;font-weight:800;color:#041017;font-size:12px}
+.points-bubble{background:rgba(255,255,255,0.03);padding:4px 8px;border-radius:6px;text-align:center;font-size:12px}
 /* player modal */
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.6);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:60;
-}
-.modal-card{
-  width:720px;
-  background:var(--panel);
-  padding:14px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,0.03);
-}
-.modal-grid{
-  display:grid;
-  grid-template-columns:1fr 260px;
-  gap:10px;
-}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:60}
+.modal-card{width:720px;background:var(--panel);padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+.modal-grid{display:grid;grid-template-columns:1fr 260px;gap:10px}
 .small-muted{color:var(--muted);font-size:12px}
 /* admin panel (right) */
-.right-panel{
-  width:300px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-.panel-card{
-  background:var(--panel);
-  padding:10px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,0.03);
-  height:100%;
-  overflow:auto; /* added scrolling */
-}
-select,input{
-  width:100%;
-  padding:7px;
-  border-radius:8px;
-  border:1px solid rgba(255,255,255,0.03);
-  background:transparent;
-  color:inherit;
-  margin-bottom:8px;
-  font-size:13px;
-}
+.right-panel{width:300px;display:flex;flex-direction:column;gap:10px}
+.panel-card{background:var(--panel);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);height:100%;overflow:auto}
+select,input{width:100%;padding:7px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit;margin-bottom:8px;font-size:13px}
 .row{display:flex;gap:8px}
 .hide{display:none}
 /* responsive */
@@ -253,23 +193,61 @@ select,input{
 <!-- Player modal -->
 <div class="modal hide" id="player-modal">
   <div class="modal-card">
-    ...
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h2 id="pm-name" style="margin:0"></h2>
+        <div id="pm-total" class="small-muted" style="margin-top:4px"></div>
+      </div>
+      <div><button id="pm-close" class="btn ghost">Close</button></div>
+    </div>
+    <div style="margin-top:10px" id="pm-gm-list"></div>
+    <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+      <button id="pm-edit" class="btn ghost hide">Edit (admin)</button>
+      <button id="pm-remove" class="btn ghost hide">Remove tier (admin)</button>
+    </div>
   </div>
 </div>
 <!-- Auth modal -->
 <div class="modal hide" id="auth-modal">
   <div class="modal-card">
-    ...
+    <h2 id="auth-title">Log in</h2>
+    <input id="auth-user" placeholder="Username" />
+    <input id="auth-pass" type="password" placeholder="Password" />
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button id="auth-submit" class="btn">Submit</button>
+      <button id="auth-cancel" class="btn ghost">Cancel</button>
+    </div>
   </div>
 </div>
 <!-- Admin modal -->
 <div class="modal hide" id="admin-modal">
   <div class="modal-card">
-    ...
+    <h2>Admin Controls</h2>
+    <div style="display:grid;gap:8px">
+      <input id="adm-player" placeholder="Player IGN" />
+      <select id="adm-gm"></select>
+      <select id="adm-tier"></select>
+      <div style="display:flex;gap:8px">
+        <button id="adm-add" class="btn">Add Tier</button>
+        <button id="adm-remove" class="btn ghost">Remove Tier</button>
+      </div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03)">
+      <input id="adm-role-user" placeholder="Username to change role" />
+      <select id="adm-role-select">
+        <option value="">-- role --</option>
+        <option value="user">user</option>
+        <option value="admin">admin</option>
+        <option value="owner">owner</option>
+      </select>
+      <button id="adm-role-set" class="btn">Set Role</button>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+        <button id="adm-close" class="btn ghost">Close</button>
+      </div>
+    </div>
   </div>
 </div>
 <script>
-// your existing JS stays exactly the same
+// ... all your existing JS goes here (unchanged)
 </script>
 </body>
 </html>
