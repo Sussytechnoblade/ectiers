@@ -21,7 +21,7 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 #search-bar input { padding:6px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.03); background:transparent; color:inherit;}
 #search-bar button { padding:6px 12px; border-radius:6px; border:none; cursor:pointer; background:#3a7afe; color:white;}
 .modal { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center;}
-.modal-card { background:#0f1114; padding:16px; border-radius:12px; width:320px; border:1px solid rgba(255,255,255,0.03);}
+.modal-card { background:#0f1114; padding:16px; border-radius:12px; width:340px; border:1px solid rgba(255,255,255,0.03);}
 .hide { display:none;}
 </style>
 </head>
@@ -53,8 +53,8 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
 <div class="modal hide" id="modal">
   <div class="modal-card">
     <h2 id="modal-title">Log In</h2>
-    <input id="modal-user" placeholder="Username">
-    <input id="modal-pass" type="password" placeholder="Password">
+    <input id="modal-user" placeholder="Username" style="width:100%; margin-bottom:6px;">
+    <input id="modal-pass" type="password" placeholder="Password" style="width:100%; margin-bottom:6px;">
     <div style="margin-top:10px;">
       <button id="modal-ok">Submit</button>
       <button id="modal-cancel">Cancel</button>
@@ -76,8 +76,9 @@ header { display:flex; justify-content:space-between; align-items:center; paddin
       <option value="admin">Admin</option>
       <option value="owner">Owner</option>
     </select>
-    <div>
+    <div style="display:flex; gap:4px; margin-top:6px;">
       <button id="btn-admin-set">Set Points</button>
+      <button id="btn-admin-remove">Remove Tier</button>
       <button id="btn-admin-role">Set Role</button>
       <button id="btn-admin-close">Close</button>
     </div>
@@ -123,20 +124,6 @@ const TIER_COLORS = {
 function saveUsers(){ localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users)); }
 function savePlayers(){ localStorage.setItem(LOCAL_PLAYERS_KEY, JSON.stringify(players)); }
 
-function getOverallTier(total){
-  if(total>=100) return "ht1";
-  if(total>=90)  return "lt1";
-  if(total>=80)  return "ht2";
-  if(total>=70)  return "lt2";
-  if(total>=60)  return "ht3";
-  if(total>=50)  return "lt3";
-  if(total>=40)  return "ht4";
-  if(total>=30)  return "lt4";
-  if(total>=20)  return "ht5";
-  if(total>=10)  return "lt5";
-  return "none";
-}
-
 // --- Setup gamemode tabs ---
 const tabs = [];
 function createTab(name){
@@ -175,6 +162,8 @@ document.getElementById("btn-logout").onclick = ()=>{ session=null; who.textCont
 // --- Admin Modal ---
 document.getElementById("btn-admin-toggle").onclick = ()=> adminModal.classList.remove("hide");
 document.getElementById("btn-admin-close").onclick = ()=> adminModal.classList.add("hide");
+
+// Admin: Add/Set Points
 document.getElementById("btn-admin-set").onclick = ()=>{
   if(!session || !(session.role==="owner"||session.role==="admin")) return alert("Only owner/admin");
   const ign=adminPlayer.value.trim(); const gm=adminGM.value; const tier=adminTier.value.trim(); const pts=parseInt(adminPoints.value);
@@ -186,7 +175,20 @@ document.getElementById("btn-admin-set").onclick = ()=>{
   adminPlayer.value=""; adminTier.value=""; adminPoints.value=""; renderTierlist();
 };
 
-// --- Admin role change ---
+// Admin: Remove Tier
+document.getElementById("btn-admin-remove").onclick = ()=>{
+  if(!session || !(session.role==="owner"||session.role==="admin")) return alert("Only owner/admin");
+  const ign=adminPlayer.value.trim(); const gm=adminGM.value; const tier=adminTier.value.trim();
+  if(!players[ign] || !players[ign][gm]) return alert("No such player/tier");
+  const index = players[ign][gm].findIndex(e=>e.tier===tier);
+  if(index===-1) return alert("Tier not found for this player in this gamemode");
+  players[ign][gm].splice(index,1);
+  savePlayers();
+  alert(`Removed ${tier} from ${ign} in ${gm}`);
+  adminPlayer.value=""; adminTier.value=""; renderTierlist();
+};
+
+// Admin: Change Role
 document.getElementById("btn-admin-role").onclick = ()=>{
   if(!session || !(session.role==="owner"||session.role==="admin")) return alert("Only owner/admin");
   const username = adminPlayer.value.trim();
@@ -198,7 +200,7 @@ document.getElementById("btn-admin-role").onclick = ()=>{
   alert(`${username} is now ${newRole}`);
 };
 
-// --- Search ---
+// Search
 document.getElementById("btn-search").onclick = ()=>{
   const ign= document.getElementById("search-player").value.trim();
   if(!ign){ playerInfoPanel.innerHTML=""; return;}
@@ -210,7 +212,7 @@ document.getElementById("btn-search").onclick = ()=>{
   playerInfoPanel.innerHTML=`<strong>${ign}</strong> — Rank #${rank}<br>Total Points: ${total}<br>Tiers: ${tiers.join(", ")}`;
 };
 
-// --- Render Tierlist ---
+// Render Tierlist
 function renderTierlist(){
   tierlistPanel.innerHTML="";
   
@@ -225,7 +227,7 @@ function renderTierlist(){
             let gmTier="None";
             if(arr.length>0){
                 gmPts = arr.reduce((a,b)=>a+b.points,0);
-                gmTier = arr[arr.length-1].tier; // latest tier
+                gmTier = arr[arr.length-1].tier;
             }
             total += gmPts;
             gmTiers.push({gm, tier:gmTier, points: gmPts});
@@ -237,14 +239,13 @@ function renderTierlist(){
     overallArr.forEach(p=>{
         const card = document.createElement("div"); 
         card.className="tier-card";
-        
         const title = document.createElement("div");
         title.innerHTML=`<strong>${p.name}</strong> — ${p.total} pts`;
         card.appendChild(title);
 
         const table = document.createElement("div");
         table.style.display="grid";
-        table.style.gridTemplateColumns="120px 60px";
+        table.style.gridTemplateColumns="120px 60px 50px";
         table.style.rowGap="4px";
         table.style.marginTop="6px";
 
@@ -257,15 +258,17 @@ function renderTierlist(){
             tierSpan.style.padding="2px 6px";
             tierSpan.style.borderRadius="6px";
             tierSpan.style.textAlign="center";
+            const pointsDiv = document.createElement("div");
+            pointsDiv.textContent = gm.points;
             table.appendChild(gmName);
             table.appendChild(tierSpan);
+            table.appendChild(pointsDiv);
         });
 
         card.appendChild(table);
         tierlistPanel.appendChild(card);
     });
   } else {
-    // Gamemode tab view
     const gm = currentView;
     const card=document.createElement("div"); card.className="tier-card";
     const h3=document.createElement("h3"); h3.textContent=gm.replace("_"," "); card.appendChild(h3);
