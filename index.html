@@ -50,6 +50,12 @@ nav a:hover {
     display: block;
 }
 
+/* ---- SCROLLING OVERALL ---- */
+#overallPage {
+    height: calc(100vh - 80px);
+    overflow-y: auto;
+}
+
 /* ---- TIER COLORS ---- */
 .tier-header {
     font-size: 32px;
@@ -79,11 +85,6 @@ nav a:hover {
 }
 
 /* ---- OVERALL TAB ---- */
-#overallPage {
-    height: calc(100vh - 80px);
-    overflow-y: auto;
-}
-
 .overall-card {
     background: #2b2b2b;
     padding: 15px;
@@ -432,8 +433,8 @@ function renderGamemode(mode) {
     let out = `
     <div class="tier-header tier1">TIER 1</div>
     <div class="tier-box">
-        <div class="player" onclick="openPlayer('${groups.HT1}')">HT1: ${groups.HT1.join(", ")}</div>
-        <div class="player" onclick="openPlayer('${groups.LT1}')">LT1: ${groups.LT1.join(", ")}</div>
+        HT1: ${groups.HT1.join(", ")}<br>
+        LT1: ${groups.LT1.join(", ")}
     </div>
 
     <div class="tier-header tier2">TIER 2</div>
