@@ -695,20 +695,16 @@ adminOpenBtn.onclick = ()=> openAdmin();
    Initialize demo data (if empty)
    ------------------------- */
 if(Object.keys(players).length === 0){
-  players["SussyTech"] = {
-    crystal: [{tier:"ht1"}],
+  players["sussytech"] = {
+    crystal: [{tier:"ht3"}],
     sword: [{tier:"lt2"}],
-    axe: [{tier:"ht3"}],
-    uhc: [{tier:"ht2"}]
   };
-  players["GamerX"] = {
-    crystal: [{tier:"lt1"}],
-    sword: [{tier:"ht2"}],
-    diamond_pot: [{tier:"ht3"}]
+  players["WhitebutterYT"] = {
+    crystal: [{tier:"lt3"}],
+    mace: [{tier:"lt3"}],
   };
-  players["NoobMaster"] = {
-    axe: [{tier:"lt5"}],
-    smp: [{tier:"lt4"}],
+  players["GattoRosso113"] = {
+    mace: [{tier:"lt3"}],
   };
   savePlayers();
 }
