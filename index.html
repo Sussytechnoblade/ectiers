@@ -1,3 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tier List</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root{
+        --bg:#0f1724;
+        --card:#0b1220;
+        --muted:#94a3b8;
+        --glass: rgba(255,255,255,0.04);
+        --radius:12px;
+        --gap:14px;
+      }
+      *{box-sizing:border-box}
+      html,body{height:100%;margin:0;font-family:'Inter',system-ui,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#071022 0%, #071428 60%);color:#e6eef8}
+      header{display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid rgba(255,255,255,0.03);backdrop-filter: blur(6px)}
+      .logo{display:flex;align-items:center;gap:12px}
+      .logo .mark{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#06b6d4);display:flex;align-items:center;justify-content:center;font-weight:700;color:white}
+      h1{font-size:20px;margin:0}
+      p.lead{margin:4px 0 0;color:var(--muted);font-size:13px}
+      main{padding:28px;max-width:1100px;margin:18px auto}
+      .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--gap)}
+      .tier-card{background:var(--card);padding:12px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;min-height:140px}
+      .tier-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+      .tier-name{font-weight:700;font-size:14px}
+      .tier-sub{color:var(--muted);font-size:12px}
+      .tier-body{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px}
+      .item{background:var(--glass);padding:8px 10px;border-radius:10px;font-size:13px;color:#e6eef8}
+      .tier-s{background:linear-gradient(90deg,#ff6b6b,#ffb86b);}
+      .tier-a{background:linear-gradient(90deg,#7c3aed,#4f46e5);}
+      .tier-b{background:linear-gradient(90deg,#06b6d4,#0ea5a0);}
+      .tier-c{background:linear-gradient(90deg,#60a5fa,#3b82f6);}
+      .tier-d{background:linear-gradient(90deg,#94a3b8,#7c7c84);}
+      .tier-f{background:linear-gradient(90deg,#334155,#0f1724);}
+      @media (max-width:1000px){
+        .grid{grid-template-columns:repeat(3,1fr)}
+      }
+      @media (max-width:640px){
+        .grid{grid-template-columns:repeat(2,1fr)}
+        header{padding:14px}
+        main{padding:14px}
+      }
+      footer{max-width:1100px;margin:12px auto;color:var(--muted);font-size:13px;text-align:center}
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">
+        <div class="mark">ET</div>
+        <div>
+          <h1>Tier List</h1>
+          <p class="lead">A clean, responsive tier list layout inspired by eaglertiers.com</p>
+        </div>
+      </div>
+    </header>
+    <main>
+      <div class="grid">
+        <section class="tier-card tier-s">
+          <div class="tier-head"><div>
+            <div class="tier-name">S</div>
+            <div class="tier-sub">Top tier — strongest picks</div>
+          </div><div>🔥</div></div>
+          <div class="tier-body">
+            <div class="item">Character 1</div>
+            <div class="item">Character 2</div>
+            <div class="item">Character 3</div>
+          </div>
+        </section>
+
+        <section class="tier-card tier-a">
+          <div class="tier-head"><div>
+            <div class="tier-name">A</div>
+            <div class="tier-sub">Excellent — great choices</div>
+          </div><div>⭐</div></div>
+          <div class="tier-body">
+            <div class="item">Character 4</div>
+            <div class="item">Character 5</div>
+          </div>
+        </section>
+
+        <section class="tier-card tier-b">
+          <div class="tier-head"><div>
+            <div class="tier-name">B</div>
+            <div class="tier-sub">Solid picks</div>
+          </div><div>👍</div></div>
+          <div class="tier-body">
+            <div class="item">Character 6</div>
+            <div class="item">Character 7</div>
+          </div>
+        </section>
+
+        <section class="tier-card tier-c">
+          <div class="tier-head"><div>
+            <div class="tier-name">C</div>
+            <div class="tier-sub">Average picks</div>
+          </div><div>🔹</div></div>
+          <div class="tier-body">
+            <div class="item">Character 8</div>
+          </div>
+        </section>
+
+        <section class="tier-card tier-d">
+          <div class="tier-head"><div>
+            <div class="tier-name">D</div>
+            <div class="tier-sub">Below average</div>
+          </div><div>⚠️</div></div>
+          <div class="tier-body">
+            <div class="item">Character 9</div>
+          </div>
+        </section>
+
+        <section class="tier-card tier-f">
+          <div class="tier-head"><div>
+            <div class="tier-name">F</div>
+            <div class="tier-sub">Avoid unless necessary</div>
+          </div><div>❌</div></div>
+          <div class="tier-body">
+            <div class="item">Character 10</div>
+          </div>
+        </section>
+      </div>
+    </main>
+    <footer>Made to resemble the clean look of eaglertiers.com — edit items as needed.</footer>
+  </body>
+</html>
 <!doctype html>
 <html lang="en">
 <head>
